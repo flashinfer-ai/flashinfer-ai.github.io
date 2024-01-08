@@ -50,3 +50,10 @@ plugins:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+<<<<<<< Updated upstream
+=======
+
+markdown: kramdown
+disqus:
+  shortname: flashinfer-ai
+>>>>>>> Stashed changes
