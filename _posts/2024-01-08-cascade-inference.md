@@ -3,7 +3,7 @@ layout: post
 title:  "Cascade Inference: Memory Bandwidth Efficient Shared Prefix Batch Decoding"
 date:  2024-01-08
 comments: true
-author: Zihao Ye (UW), Ruihang Lai (CMU), Roy Lu (UW), Chien-Yu Lin (UW), Size Zheng (UW & PKU), Lequn Chen (UW), Tianqi Chen (CMU), Luis Ceze (UW)
+author: Zihao Ye (UW), Ruihang Lai (CMU), Roy Lu (UW), Chien-Yu Lin (UW), Size Zheng (UW & PKU), Lequn Chen (UW), Tianqi Chen (CMU & OctoAI), Luis Ceze (UW & OctoAI)
 ---
  
 Many LLM inference tasks involves multiple independent text generation from a shared prefix (prompt), e.g. [Self-Consistency](https://arxiv.org/abs/2203.11171), [Tree of Thoughts](https://arxiv.org/abs/2305.10601) and [Skeleton-of-thought](https://arxiv.org/abs/2307.15337). Serving LLMs with common prefix could be memory and time-consuming, especially when common prefix is long and the number of requests is large: a possible use case is long document QA (Figure 1), multiple users interacts with ChatBot with the same document as prompt. While [vLLM](https://arxiv.org/abs/2309.06180) alleviate the memory issue by only storing one copy of the common prefix. However, it still suffers from the low-efficiency because the default PageAttention implementation do not optimize KV-Cache access to the shared prompt.
