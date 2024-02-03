@@ -4,7 +4,7 @@ title:  "Accelerating Self-Attentions for LLM Serving with FlashInfer"
 date:  2024-02-02
 comments: true
 usematjax: true
-author: Zihao Ye (UW), Lequn Chen (UW), Ruihang Lai (CMU), Yilong Zhao (UW), Size Zheng (UW & PKU), Junru Shao (OctoML), Bohan Hou (CMU), Hongyi Jin (CMU), Yifei Zuo (UW & USTC), Liangsheng Yin (SJTU & LMSys), Tianqi Chen (CMU & OctoML), Luis Ceze (UW & OctoML)
+author: Zihao Ye (UW), Lequn Chen (UW), Ruihang Lai (CMU), Yilong Zhao (UW), Size Zheng (UW & PKU), Junru Shao (OctoAI), Bohan Hou (CMU), Hongyi Jin (CMU), Yifei Zuo (UW & USTC), Liangsheng Yin (SJTU & LMSys), Tianqi Chen (CMU & OctoAI), Luis Ceze (UW & OctoAI)
 redirect_from: "/2024/01/03/introduce-flashinfer"
 ---
 
@@ -14,7 +14,7 @@ redirect_from: "/2024/01/03/introduce-flashinfer"
 
 LLM (Large Language Models) Serving quickly became an important workload. The efficacy of operators within Transformers – namely GEMM, Self-Attention, GEMV, and elementwise computations are critical to the overall performance of LLM serving. While optimization efforts have extensively targeted GEMM and GEMV, there is a lack of performance studies focused on Self-Attention in the context of LLM serving. In this blog post, we break Self-Attention down into three stages: prefill, decode, and append; analyze the performance bottleneck of Self-Attention on both single-request and batching scenarios in these three stages; and propose a solution to tackle these challenges. These ideas have been integrated into [FlashInfer](https://github.com/flashinfer-ai/flashinfer/), an open-source library for accelerating LLM serving released under Apache 2.0 license.
 
-FlashInfer has been developed by researchers from the University of Washington, Carnegie Mellon University, and OctoML since summer 2023. FlashInfer provides PyTorch APIs for quick prototyping, and a dependency-free, header-only C++ APIs for integration with existing LLM serving systems. Compared to existing libraries, FlashInfer has several unique advantages:
+FlashInfer has been developed by researchers from the University of Washington, Carnegie Mellon University, and OctoAI since summer 2023. FlashInfer provides PyTorch APIs for quick prototyping, and a dependency-free, header-only C++ APIs for integration with existing LLM serving systems. Compared to existing libraries, FlashInfer has several unique advantages:
 
 1. **Comprehensive Attention Kernels**: FlashInfer implements attention kernels that cover all the common use cases of LLM serving with state-of-the-art performance, including single-request and batching versions of Prefill, Decode, and Append kernels, on various formats of KV-Cache (Padded Tensor, Ragged Tensor, and Page Table).
 2. **Optimized Shared-Prefix Batch Decoding**: FlashInfer enhances shared-prefix batch decoding performance through cascading, resulting in an impressive up to 31x speedup compared to the baseline vLLM PageAttention implementation (for long prompt of 32768 tokens and large batch size of 256).
@@ -57,8 +57,8 @@ FlashInfer implements single-request and batch version of FlashAttention for all
 
 Many recent work proposes KV-Cache compression techniques to reduce memory traffic. In light of this,
  FlashInfer optimize kernels for *Grouped-Query Attention*, *Fused-RoPE Attention* and *Quantized Attention* for efficient serving with compressed KV-Cache:
-- **Grouped Query Attention**: Grouped Query Attention uses a smaller number of heads for keys and values thus saving memory traffic. The operational intensity of Grouped Query Attention grows from $O(1)$ to $O\left(\frac{H_{qo}}{H_{kv}}\right)$ where $H_{qo}$ is the number of heads for queries and $H_{kv}$ is the number of heads for keys and values. GPUs such as A100/H100 has low non-tensor cores performance, and thus traditional implementation of Grouped Query Attention is compute-bound. FlashInfer proposes to use prefill kernels (which utilizes Tensor Cores) for decode attention in GQA, and achieves up to 2-3x speedup compared to vLLM implementation.
-- **Fused-RoPE Attention**: RoPE (Rotary Positional Embeddings) has become a standard component of Transformers, most existing serving systems stores post-RoPE keys (the keys after applying rotary embeddings) in KV-Cache. However, some recent work such as StreamLLM will prune tokens in KV-Cache, and the position of tokens will change after pruning, thus the post-RoPE keys in KV-Cache will be meaningless. In this case, FlashInfer proposes to save pre-RoPE keys in KV-Cache, and fuses RoPE into attention kernel. Experiments on various platform and settings show that FlashInfer's Fused-RoPE Attention kernel can apply RoPE on the fly with negligible overhead.
+- **Grouped Query Attention**: [Grouped Query Attention](https://arxiv.org/abs/2305.13245) uses a smaller number of heads for keys and values thus saving memory traffic. The operational intensity of Grouped Query Attention grows from $O(1)$ to $O\left(\frac{H_{qo}}{H_{kv}}\right)$ where $H_{qo}$ is the number of heads for queries and $H_{kv}$ is the number of heads for keys and values. GPUs such as A100/H100 has low non-tensor cores performance, and thus traditional implementation of Grouped Query Attention is compute-bound. FlashInfer proposes to use prefill kernels (which utilizes Tensor Cores) for decode attention in GQA, and achieves up to 2-3x speedup compared to vLLM implementation.
+- **Fused-RoPE Attention**: [RoPE (Rotary Positional Embeddings)](https://arxiv.org/abs/2104.09864) has become a standard component of Transformers, most existing serving systems stores post-RoPE keys (the keys after applying rotary embeddings) in KV-Cache. However, some recent work such as [StreamingLLM](https://arxiv.org/abs/2309.17453) will prune tokens in KV-Cache, and the position of tokens will change after pruning, thus the post-RoPE keys in KV-Cache will be meaningless. In this case, FlashInfer proposes to save pre-RoPE keys in KV-Cache, and fuses RoPE into attention kernel. Experiments on various platform and settings show that FlashInfer's Fused-RoPE Attention kernel can apply RoPE on the fly with negligible overhead.
 - **Quantized Attention**: Another way to compress KV-Cache is through pruning, [FlexGen](https://arxiv.org/abs/2303.06865) and [Atom](https://arxiv.org/abs/2310.19102) show that it's possible to prune KV-Cache to 4-bit with negligible accuracy loss. FlashInfer implements low-precision attention kernels so that we can achieve nearly linear speedup to the compression ratio (~4x for 4bit, ~2x for 8bit).
 
 Some recent work such as [LightLLM](https://github.com/ModelTC/lightllm) and [sglang](https://github.com/sgl-project/sglang) uses a special form of PageAttention where page size equals one, for easy management of KV-Cache in complicated serving scenarios such as structured generation. FlashInfer optimizes PageAttention kernels by pre-fetching page indices in GPU shared memory, so that kernel performance is not affected by the number of pages.
@@ -132,7 +132,7 @@ FlashInfer achieves best performance on all 4 GPUs, and the GPU bandwidth utiliz
 For batch decoding attention, FlashInfer implements an optimized version of PageAttention, below is the speedup compared to vLLM PageAttention implementation:
 
 <p align="center">
-<img src="/assets/imgs/batch-decode-benchmark.png" alt="batch decode kernel benchmarks" width="600"/>
+<img src="/assets/imgs/batch-decode-benchmark.png" alt="batch decode kernel benchmarks" width="800"/>
 <br>
 Figure 6: Batch decode kernel performance, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128, batch_size=[1,16,64]. Sequence length varies from 32 to 65536 for batch_size = 1, from 32 to 4096 for batch_size = 16, and from 32 to 1024 for batch_size = 64.
 </p>
@@ -149,9 +149,9 @@ FlashInfer still achieves the best performance on all 4 GPUs, either with fp16 o
 Split-KV significantly improves the performance of append kernels for append length of both 128 and 256, because the operational intensity of the operator becomes large, and using 32/100+ SMs no longer provides enough compute units, thus making the kernel compute-bound.
 Note that the ridge point of RTX 4090's Tensor Cores fp32 accumulator roofline is 163 (165 TFLops/s / 1008 GB/s), the kernel will be compute bound when query length (which approximately equals operational intensity) is 256, using `allow_fp16_qk_reduction` will alleviate the issue.
 
-### Multi-Query Attention
+### Grouped-Query Attention
 
-Multi-Query Attention uses smaller number of key/value heads than the number of query/output heads, makes the operational intensity higher than ordinary multi-head attention. FlashInfer proposes to use prefill(multi-query) attention kernel, which utilize Tensor Cores, for decode attention in GQA, below is the speedup brought by this optimization on A100 & H100:
+[Grouped-Query Attention](https://arxiv.org/abs/2305.13245) uses smaller number of key/value heads than the number of query/output heads, makes the operational intensity higher than ordinary multi-head attention. FlashInfer proposes to use prefill(multi-query) attention kernel, which utilize Tensor Cores, for decode attention in GQA, below is the speedup brought by this optimization on A100 & H100:
 
 <p align="center">
 <img src="/assets/imgs/single-gqa-benchmark.png" alt="single gqa benchmarks" width="800"/>
@@ -228,14 +228,14 @@ This blog post is written by [Zihao Ye](https://homes.cs.washington.edu/~zhye/).
 - Ruihang Lai (CMU): KV-Cache design, API design and integration with MLC-LLM
 - Yilong Zhao (UW & SJTU): int4 attention operators
 - Size Zheng (UW & PKU): CUDA optimizations and speculative decoding
-- Junru Shao and Yaxing Cai (OctoML): MLC-LLM integration
+- Junru Shao and Yaxing Cai (OctoAI): MLC-LLM integration
 - Bohan Hou and Hongyi Jin (CMU): porting FlashInfer to AMD and Mac GPUs with Apache TVM
 - Liangsheng Yin (SJTU & LMSys): PyTorch bindings and sglang integration.
 - Yifei Zuo (UW & USTC): PyTorch bindings
-- Tianqi Chen (CMU & OctoML): recursive form of softmax/attention merge and advices
-- Luis Ceze (UW & OctoML): performance breakdown analysis and advices
+- Tianqi Chen (CMU & OctoAI): recursive form of softmax/attention merge and advices
+- Luis Ceze (UW & OctoAI): performance breakdown analysis and advices
 
-We also thank Masahiro Masuda (OctoML), Yixin Dong (UW & SJTU), Roy Lu (UW), Chien-Yu Lin (UW), Ying Sheng (Stanford & LMSys) and Lianmin Zheng (Berkeley & LMSys) for their valuable feedbacks and discussions.
+We also thank Masahiro Masuda (OctoAI), Yixin Dong (UW & SJTU), Roy Lu (UW), Chien-Yu Lin (UW), Ying Sheng (Stanford & LMSys) and Lianmin Zheng (Berkeley & LMSys) for their valuable feedbacks and discussions.
 
 ## References
 [^1]: [Dissecting Batching Effects in GPT Inference](https://le.qun.ch/en/blog/2023/05/13/transformer-batching/) by Lequn Chen
