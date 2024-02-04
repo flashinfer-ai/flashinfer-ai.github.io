@@ -61,7 +61,7 @@ Many recent work proposes KV-Cache compression techniques to reduce memory traff
 - **Fused-RoPE Attention**: [RoPE (Rotary Positional Embeddings)](https://arxiv.org/abs/2104.09864) has become a standard component of Transformers, most existing serving systems stores post-RoPE keys (the keys after applying rotary embeddings) in KV-Cache. However, some recent work such as [StreamingLLM](https://arxiv.org/abs/2309.17453) will prune tokens in KV-Cache, and the position of tokens will change after pruning, thus the post-RoPE keys in KV-Cache will be meaningless. In this case, FlashInfer proposes to save pre-RoPE keys in KV-Cache, and fuses RoPE into attention kernel. Experiments on various platform and settings show that FlashInfer's Fused-RoPE Attention kernel can apply RoPE on the fly with negligible overhead.
 - **Quantized Attention**: Another way to compress KV-Cache is through pruning, [FlexGen](https://arxiv.org/abs/2303.06865) and [Atom](https://arxiv.org/abs/2310.19102) show that it's possible to prune KV-Cache to 4-bit with negligible accuracy loss. FlashInfer implements low-precision attention kernels so that we can achieve nearly linear speedup to the compression ratio (~4x for 4bit, ~2x for 8bit).
 
-Some recent work such as [LightLLM](https://github.com/ModelTC/lightllm) and [sglang](https://github.com/sgl-project/sglang) uses a special form of PageAttention where page size equals one, for easy management of KV-Cache in complicated serving scenarios such as structured generation. FlashInfer optimizes PageAttention kernels by pre-fetching page indices in GPU shared memory, so that kernel performance is not affected by the number of pages.
+Some recent work such as [LightLLM](https://github.com/ModelTC/lightllm) and [sglang](https://github.com/sgl-project/sglang) uses a special form of PageAttention where page size equals one, for easy management of KV-Cache in complicated serving scenarios such as structured generation. FlashInfer optimizes PageAttention kernels by pre-fetching page indices in GPU shared memory, so that kernel performance is not affected by the page size.
 
 In the subsequent sections, we will delve into the detailed optimizations and benchmark results achieved by FlashInfer.
 
@@ -177,7 +177,7 @@ relative positions of tokens in KV-Cache will be polluted, storing post-RoPE key
 <p align="center">
 <img src="/assets/imgs/fused-rope-attention.png" alt="fused rope attention" width="800"/>
 <br>
-Figure 10: Fused RoPE attention performance, use llama-7b setting: um_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 8192.
+Figure 10: Fused RoPE attention performance, use llama-7b setting: um_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
 </p>
 
 RoPE has negligible overhead on all 4 GPUs, especially for RTX 6000 Ada and RTX 4090 GPU which has
@@ -200,7 +200,7 @@ There is some gap between bandwidth utilization of fp8 and fp16 kernels, however
 
 ### Effect of Page Size on FlashInfer's PageAttention
 
-The FlashInfer decode kernels prefetches page indices in GPU shared memory, thus minimizing the impact of the number of pages on kernel performance. Below is the performance comparison of FlashInfer PageAttention with different page sizes on A100:
+The FlashInfer decode kernels prefetches page indices in GPU shared memory, thus minimizing the impact of the page size on kernel performance. Below is the performance comparison of FlashInfer PageAttention with different page sizes on A100:
 
 <p align="center">
 <img src="/assets/imgs/page-effect-benchmark.png" alt="ablation page size attention" width="400"/>
