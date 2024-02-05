@@ -107,7 +107,7 @@ We report achieved TFLops/s for prefill & append attention kernels, and GPU memo
 
 ### Prefill Kernels
 
-For prefill (multi-query) attention, we reimplemented the FlashAttention 2 algorithm in pure CUDA with some additional optimizations. Standard FlashAttention implementation uses Tensor Cores with fp16 input and fp32 accumulator, however, RTX 4090 GPUs has lower Tensor Cores performance with fp32 accumulator, we observe that the $\frac{\mathbf{q}\cdot \mathbf{k}^{T}}{\sqrt(d)}$ phase in attention computation have small range and can be accumulated with fp16 (because the head dimension is always small: e.g. 128), FlashInfer provides an `allow_fp16_qk_reduction` option to allow this optimization (but still use fp32 accumulation for $\mathbf{score} \cdot \mathbf{v}$), this optimization could bring 50% speedup on RTX 4090. Below is the performance comparison of FlashInfer 0.0.1 and FlashAttention 2.4.2 on different GPUs:
+For prefill (multi-query) attention, we reimplemented the FlashAttention 2 algorithm in pure CUDA with some additional optimizations. Standard FlashAttention implementation uses Tensor Cores with fp16 input and fp32 accumulator, however, RTX 4090 GPUs has lower Tensor Cores performance with fp32 accumulator, we observe that the $\frac{\mathbf{q}\cdot \mathbf{k}^{T}}{\sqrt(d)}$ phase in attention computation have small value range and can be accumulated with fp16 (because the head dimension is always small: e.g. 128), FlashInfer provides an `allow_fp16_qk_reduction` option to allow this optimization (but still use fp32 accumulation for $\mathbf{score} \cdot \mathbf{v}$), this optimization could bring 50% speedup on RTX 4090. Below is the performance comparison of FlashInfer 0.0.1 and FlashAttention 2.4.2 on different GPUs:
 
 <p align="center">
 <img src="/assets/imgs/single-prefill-benchmark.png" alt="single prefill kernel benchmarks" width="800"/>
@@ -242,5 +242,5 @@ This blog post is written by [Zihao Ye](https://homes.cs.washington.edu/~zhye/).
 
 We also thank Masahiro Masuda (OctoAI), Yixin Dong (UW & SJTU), Roy Lu (UW), Chien-Yu Lin (UW), Ying Sheng (Stanford & LMSys) and Lianmin Zheng (Berkeley & LMSys) for their valuable feedbacks and discussions.
 
-## References
+## Footnotes
 [^1]: [Dissecting Batching Effects in GPT Inference](https://le.qun.ch/en/blog/2023/05/13/transformer-batching/) by Lequn Chen
