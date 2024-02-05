@@ -69,7 +69,7 @@ In the subsequent sections, we will delve into the detailed optimizations and be
 
 ### Hardware
 
-We benchmarked on 4 different GPUs: H100 SXM 80GB, A100 PCIe 80GB, RTX 4090 and RTX 6000 Ada, the first two is widely used data center GPU in [Hopper](https://www.hpctech.co.jp/catalog/gtc22-whitepaper-hopper_v1.01.pdf) and [Ampere](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf) architectures, respectively, and latter two are workstation and gaming GPUs in [Ada Lovelace architecture](https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf) that are much more affordable, the specifications are listed in the following table:
+We benchmarked on 4 different GPUs: H100 SXM 80GB, A100 PCIe 80GB, RTX 6000 Ada and RTX 4090, the first two is widely used data center GPU in [Hopper](https://www.hpctech.co.jp/catalog/gtc22-whitepaper-hopper_v1.01.pdf) and [Ampere](https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf) architectures, respectively, and latter two are workstation and gaming GPUs in [Ada Lovelace architecture](https://images.nvidia.com/aem-dam/Solutions/geforce/ada/nvidia-ada-gpu-architecture.pdf) that are much more affordable, the specifications are listed in the following table:
 
 |                                         | H100 SXM 80GB  | A100 PCIe 80GB | RTX Ada 6000         | RTX 4090                        |
 |-----------------------------------------|----------------|----------------|----------------------|---------------------------------|
