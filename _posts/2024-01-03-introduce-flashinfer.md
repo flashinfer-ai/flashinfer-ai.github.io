@@ -150,6 +150,8 @@ FlashInfer still achieves the best performance on all 4 GPUs, either with fp16 o
 Split-KV significantly improves the performance of append kernels for append length of both 128 and 256, because the operational intensity of the operator becomes large, and using 32/100+ SMs no longer provides enough compute units, thus making the kernel compute-bound.
 Note that the ridge point of RTX 4090's Tensor Cores fp32 accumulator roofline is 163 (165 TFLops/s / 1008 GB/s), the kernel will be compute bound when query length (which approximately equals operational intensity) reaches 256, using `allow_fp16_qk_reduction` can alleviate the issue.
 
+FlashInfer also implemented batch append attention kernel where key/value is stored in Page Tables, this could accelerate speculative decoding in LLM serving, and we will discuss this in another blog post.
+
 ### Grouped-Query Attention
 
 [Grouped-Query Attention](https://arxiv.org/abs/2305.13245) uses smaller number of key/value heads than the number of query/output heads, makes the operational intensity higher than ordinary multi-head attention. FlashInfer proposes to use prefill(multi-query) attention kernel, which utilize Tensor Cores, for decode attention in GQA, below is the speedup brought by this optimization on A100 & H100:
