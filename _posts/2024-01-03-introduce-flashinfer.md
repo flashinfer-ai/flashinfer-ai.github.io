@@ -112,7 +112,7 @@ For prefill (multi-query) attention, we reimplemented the FlashAttention 2 algor
 <p align="center">
 <img src="/assets/imgs/single-prefill-benchmark.png" alt="single prefill kernel benchmarks" width="800"/>
 <br>
-Figure 4: Single request prefill kernel performance, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65535.
+Figure 4: Single request prefill kernel performance, use Llama2-7B setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65535.
 </p>
 
 In f32 accumulation setting, FlashInfer's prefill kernel implementation achieves best performance on all 4 GPUs. `allow_fp16_qk_reduction` option can further improve performance, especially for RTX 4090.
@@ -124,18 +124,18 @@ Append and decode attention tend to have larger KV length than query length, whi
 <p align="center">
 <img src="/assets/imgs/single-decode-benchmark.png" alt="single decode kernel benchmarks" width="800"/>
 <br>
-Figure 5: Single request decode kernel performance, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
+Figure 5: Single request decode kernel performance, use Llama2-7B setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
 </p>
 
 FlashInfer achieves best performance on all 4 GPUs, and the GPU bandwidth utilization is close to 100% for long sequences.
-An interesting fact is that split-KV do not improve performance for GPUs such as RTX Ada 6000 and RTX 4090 because they have relatively smaller memory bandwidth and stronger CUDA Cores performance (decode attention has low operational intensity and we use CUDA Cores in non-GQA setting). Unlike compute units which is SM local, the global memory traffic on GPUs is shared, thus using 32 (number of heads in Llama-7B setting) of 108 SMs can still fully utilize the memory bandwidth if the operator is not compute-bound. A100 GPUs has low CUDA Cores performance (20 TFLops/s), using 32 of 108 SMs (5.9 TFLops/s) will make the kernel compute-bound (besides multiply and add, there are also time-consuming computations such as `exp` in attention computation), and split-KV will be helpful in this case.
+An interesting fact is that split-KV do not improve performance for GPUs such as RTX Ada 6000 and RTX 4090 because they have relatively smaller memory bandwidth and stronger CUDA Cores performance (decode attention has low operational intensity and we use CUDA Cores in non-GQA setting). Unlike compute units which is SM local, the global memory traffic on GPUs is shared, thus using 32 (number of heads in Llama2-7B setting) of 108 SMs can still fully utilize the memory bandwidth if the operator is not compute-bound. A100 GPUs has low CUDA Cores performance (20 TFLops/s), using 32 of 108 SMs (5.9 TFLops/s) will make the kernel compute-bound (besides multiply and add, there are also time-consuming computations such as `exp` in attention computation), and split-KV will be helpful in this case.
 
 For batch decoding attention, FlashInfer implements an optimized version of PageAttention, below is performance comparison of FlashInfer PageAttention kernel and vLLM PageAttention kernel:
 
 <p align="center">
 <img src="/assets/imgs/batch-decode-benchmark.png" alt="batch decode kernel benchmarks" width="800"/>
 <br>
-Figure 6: Batch decode kernel performance, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128, batch_size=[1,16,64]. Sequence length varies from 32 to 65536 for batch_size = 1, from 32 to 4096 for batch_size = 16, and from 32 to 1024 for batch_size = 64.
+Figure 6: Batch decode kernel performance, use Llama2-7B setting: num_kv_heads=num_qo_heads=32, head_dim=128, batch_size=[1,16,64]. Sequence length varies from 32 to 65536 for batch_size = 1, from 32 to 4096 for batch_size = 16, and from 32 to 1024 for batch_size = 64.
 </p>
 
 FlashInfer PageAttention kernel has consistent speedup over vLLM 0.2.6's implementation in different batch sizes and different sequence lengths.
@@ -145,7 +145,7 @@ We also benchmark the append attention kernels (append attention shares the same
 <p align="center">
 <img src="/assets/imgs/single-append-benchmark.png" alt="append kernel benchmarks" width="800"/>
 <br>
-Figure 7: Append attention kernel performance, use llama-7b setting, num_kv_heads=num_qo_heads=32, head_dim=128. The append length is set to 128 or 256, KV sequence length varies from 32 to 65536.
+Figure 7: Append attention kernel performance, use Llama2-7B setting, num_kv_heads=num_qo_heads=32, head_dim=128. The append length is set to 128 or 256, KV sequence length varies from 32 to 65536.
 </p>
 
 FlashInfer still achieves the best performance on all 4 GPUs, either with fp16 or fp32 qk accumulator.
@@ -161,7 +161,7 @@ FlashInfer also implemented batch append attention kernel where key/value is sto
 <p align="center">
 <img src="/assets/imgs/single-gqa-benchmark.png" alt="single gqa benchmarks" width="800"/>
 <br>
-Figure 8: Single request GQA decode performance, use llama-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 8192.
+Figure 8: Single request GQA decode performance, use llama2-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 8192.
 </p>
 
 For single-request GQA decoding attention, FlashInfer (Tensor Cores) achieves better performance than FlashAttention 2.4.2 on both A100 & H100, and FlashInfer (CUDA Cores) can only achieve 40%+ bandwidth utilization because of limited CUDA Cores performance.
@@ -169,7 +169,7 @@ For single-request GQA decoding attention, FlashInfer (Tensor Cores) achieves be
 <p align="center">
 <img src="/assets/imgs/batch-gqa-benchmark.png" alt="batch gqa benchmarks" width="800"/>
 <br>
-Figure 9: Batch GQA decode performance, use llama-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. batch_size is set to 64 and sequence length per request varies from 32 to 8192.
+Figure 9: Batch GQA decode performance, use llama2-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. batch_size is set to 64 and sequence length per request varies from 32 to 8192.
 </p>
 
 For batch GQA decoding attention, FlashInfer w/ Tensor Cores is 3x faster than vLLM PagaAttention when `batch_size=64`.
@@ -182,7 +182,7 @@ relative positions of tokens in KV-Cache will be polluted, storing post-RoPE key
 <p align="center">
 <img src="/assets/imgs/fused-rope-attention.png" alt="fused rope attention" width="800"/>
 <br>
-Figure 10: Fused RoPE attention performance, use llama-7b setting: um_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
+Figure 10: Fused RoPE attention performance, use Llama2-7B setting: um_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
 </p>
 
 RoPE has negligible overhead on all 4 GPUs, especially for RTX 6000 Ada and RTX 4090 GPU which has
@@ -210,7 +210,7 @@ The FlashInfer decode kernels prefetches page indices in GPU shared memory, thus
 <p align="center">
 <img src="/assets/imgs/page-effect-benchmark.png" alt="ablation page size attention" width="400"/>
 <br>
-Figure 12: Batch decode performance on different page_size. batch_size is set to 1, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence lengths varies from 32 to 65536. We also add a reference line for the performance of FlashInfer single-request decode attention without using Page Table.
+Figure 12: Batch decode performance on different page_size. batch_size is set to 1, use Llama2-7B setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence lengths varies from 32 to 65536. We also add a reference line for the performance of FlashInfer single-request decode attention without using Page Table.
 </p>
 
 The memory bandwidth utilization of the 4 different page sizes are nearly identical, and they are close to the single-request decode attention curve, which indicates that page size has little effect on FlashInfer PageAttention's kernel performance, and page table itself has little overhead.
