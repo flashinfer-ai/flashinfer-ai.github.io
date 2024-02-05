@@ -130,7 +130,7 @@ Figure 5: Single request decode kernel performance, use Llama2-7B setting: num_k
 FlashInfer achieves best performance on all 4 GPUs, and the GPU bandwidth utilization is close to 100% for long sequences.
 An interesting fact is that split-KV do not improve performance for GPUs such as RTX Ada 6000 and RTX 4090 because they have relatively smaller memory bandwidth and stronger CUDA Cores performance (decode attention has low operational intensity and we use CUDA Cores in non-GQA setting). Unlike compute units which is SM local, the global memory traffic on GPUs is shared, thus using 32 (number of heads in Llama2-7B setting) of 108 SMs can still fully utilize the memory bandwidth if the operator is not compute-bound. A100 GPUs has low CUDA Cores performance (20 TFLops/s), using 32 of 108 SMs (5.9 TFLops/s) will make the kernel compute-bound (besides multiply and add, there are also time-consuming computations such as `exp` in attention computation), and split-KV is helpful in this case.
 
-For batch decoding attention, FlashInfer implements an optimized version of PageAttention, below is performance comparison of FlashInfer PageAttention kernel and vLLM PageAttention kernel:
+For batch decoding attention, FlashInfer implements PageAttention with optimizations such as pre-fetching page indices, below is performance comparison of FlashInfer PageAttention kernel and vLLM PageAttention kernel:
 
 <p align="center">
 <img src="/assets/imgs/batch-decode-benchmark.png" alt="batch decode kernel benchmarks" width="800"/>
