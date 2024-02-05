@@ -46,12 +46,12 @@ we can generalize the definition from single index to an index set:
 
 $$ s(I) = \log\left(\sum_{i\in I} \exp(s_i) \right),$$
 
-let's also generalize the value vector $\mathbf{v}$ from index to index sets (Note that the generalization of both $s$ and $v$ are self-consistent because when $I$ equals $\{i\}$, we have $s(I) = s_i$ and $\mathbf{v}(I) = \mathbf{v}_i$):
+let's also generalize the value vector $\mathbf{v}$ from index to index sets (Note that the generalization of both $s$ and $\mathbf{v}$ are self-consistent: when $I$ equals $\\{i\\}$, we have $s(I) = s_i$ and $\mathbf{v}(I) = \mathbf{v}_i$):
 
 $$ \mathbf{v}(I) = \sum_{i\in I}\textrm{softmax}(s_i) \mathbf{v}_i = \frac{\sum_{i\in I}\exp\left(s_i\right)\mathbf{v}_i}{\exp(s(I))}, $$
 
-the $\textrm{softmax}$ function is restricted to the index set $I$. Note that $\mathbf{v}(\{1,2,\cdots, n\})$ is the self-attention output of the entire sequence. The **attention state** between a query with KV of an index set $I$ can be defined as a tuple $\begin{bmatrix}\mathbf{v}(I) \\\ s(I)\end{bmatrix}$,
-then we can define a binary **merge** operator $\oplus$ to combine two states as (in practice we will minus $s$ with maximum value to guarantee numerical stability and here we omit them for simplicity):
+the $\textrm{softmax}$ function is restricted to the index set $I$. Note that $\mathbf{v}(\\{1,2,\cdots, n\\})$ is the self-attention output of the entire sequence. The **attention state** between a query with KV of an index set $I$ can be defined as a tuple $\begin{bmatrix}\mathbf{v}(I) \\\ s(I)\end{bmatrix}$,
+then we can define a binary **merge** operator $\oplus$ to combine two states as (in practice we will minus $s$ with maximum value to guarantee numerical stability and here we omit the trick for simplicity):
 
 $$\begin{bmatrix}\mathbf{v}(I\cup J)\\s(I\cup J)\end{bmatrix}=\begin{bmatrix}\mathbf{v}(I)\\s(I)\end{bmatrix}\oplus\begin{bmatrix}\mathbf{v}(J)\\s(J)\end{bmatrix}=\begin{bmatrix} \frac{\mathbf{v}(I)\exp(s(I)) + \mathbf{v}(J)\exp(s(J))}{\exp(s(I)) + \exp(s(J))} \\  \log(\exp(s(I)) + \exp(s(J))) \end{bmatrix},$$
 
