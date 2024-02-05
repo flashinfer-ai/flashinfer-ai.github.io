@@ -215,7 +215,7 @@ Figure 12: Batch decode performance on different page_size. batch_size is set to
 
 The memory bandwidth utilization of the 4 different page sizes are nearly identical, and they are close to the single-request decode attention curve, which indicates that page size has little effect on FlashInfer PageAttention's kernel performance, and page table itself has little overhead.
 
-Some recent work such [sglang](https://github.com/sgl-project/sglang) explores novel KV-Cache management algorithm which requires `page_size=1`, and the performance could be benefited from FlashInfer's optimization.
+Some recent work such [sglang](https://github.com/sgl-project/sglang) explores novel KV-Cache management algorithm which requires `page_size=1`, and the performance could benefit from FlashInfer's optimization.
 
 ## Remarks and Future Work
 
