@@ -3,7 +3,7 @@ layout: post
 title:  "Cascade Inference: Memory Bandwidth Efficient Shared Prefix Batch Decoding"
 date:  2024-02-02
 comments: true
-author: Zihao Ye (UW), Ruihang Lai (CMU), Bo-Ru Lu (UW), Chien-Yu Lin (UW), Size Zheng (UW & PKU), Lequn Chen (UW), Tianqi Chen (CMU & OctoML), Luis Ceze (UW & OctoML)
+author: Zihao Ye (UW), Ruihang Lai (CMU), Bo-Ru Lu (UW), Chien-Yu Lin (UW), Size Zheng (UW & PKU), Lequn Chen (UW), Tianqi Chen (CMU & OctoAI), Luis Ceze (UW & OctoAI)
 redirect_from: "/2024/01/08/cascade-inference"
 ---
  

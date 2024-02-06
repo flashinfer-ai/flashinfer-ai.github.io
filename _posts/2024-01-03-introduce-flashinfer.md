@@ -186,7 +186,7 @@ Figure 10: Fused RoPE attention performance, use Llama2-7B setting: um_kv_heads=
 </p>
 
 RoPE has negligible overhead on all 4 GPUs, especially for RTX 6000 Ada and RTX 4090 GPU which has
-strong CUDA Cores performance (RoPE requires `sin`/`cos` computation that can only be accelerated with Tensor Cores).
+strong CUDA Cores performance (RoPE requires `sin`/`cos` computation that can not be accelerated with Tensor Cores).
 
 ### Low-Precision Attention
 
