@@ -161,7 +161,7 @@ FlashInfer also implemented batch append attention kernel where key/value is sto
 <p align="center">
 <img src="/assets/imgs/single-gqa-benchmark.png" alt="single gqa benchmarks" width="800"/>
 <br>
-Figure 8: Single request GQA decode performance, use llama2-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 8192.
+Figure 8: Single request GQA decode performance, use llama2-70b setting: tp=2, num_kv_heads=4, num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
 </p>
 
 For single-request GQA decoding attention, FlashInfer (Tensor Cores) achieves better performance than FlashAttention 2.4.2 on both A100 & H100, and FlashInfer (CUDA Cores) can only achieve 40%+ bandwidth utilization because of limited CUDA Cores performance.
@@ -196,7 +196,7 @@ FlashInfer implements high-performance fp8 decode decode kernels, which could ac
 <p align="center">
 <img src="/assets/imgs/fp8-attention.png" alt="fp8 attention" width="800"/>
 <br>
-Figure 11: FP8 decode attention performance, use llama-7b setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 8192.
+Figure 11: FP8 decode attention performance, use Llama2-7B setting: num_kv_heads=num_qo_heads=32, head_dim=128. Sequence length varies from 32 to 65536.
 </p>
 
 There is some gap between bandwidth utilization of fp8 and fp16 kernels, however the gap is getting closer as the query length grows.

@@ -64,7 +64,7 @@ The above n-ary merge operator is consistent with the binary merge operator, and
 <p align="center">
 <img src="/assets/imgs/recursive-attention.png" alt="recursive-attention" width="800"/>
 <br>
-Figure 3. Different order to merge attention states are mathematically equivalent.
+Figure 2. Different order to merge attention states are mathematically equivalent.
 </p>
 
 Recursive Attention allow us to decompose attention computation into multiple stages, different stages
@@ -78,12 +78,12 @@ we propose the following Divide-and-Conquer algorithm:
 2. Use batch decode attention kernel to compute the attention state between queries and KV-Cache of unique suffixes.
 3. Use merge operator to combine two attention states to get the final attention output.
 
-The overall workflow is explained on the left side of Figure 2, different color of rectangles are processed in different thread blocks in GPU. Note that for multi-query attention kernels, we access KV-Cache through SMEM or registers and for decode kernels we can only access KV-Cache through L2 Cache or Global Memory. Cascade Inference allow us to maximize memory reuse for common prefix, thus making the attention computation much more memory efficient.
+The overall workflow is explained on the left side of Figure 3, different color of rectangles are processed in different thread blocks in GPU. Note that for multi-query attention kernels, we access KV-Cache through SMEM or registers and for decode kernels we can only access KV-Cache through L2 Cache or Global Memory. Cascade Inference allow us to maximize memory reuse for common prefix, thus making the attention computation much more memory efficient.
 
 <p align="center">
 <img src="/assets/imgs/cascade-inference.png" alt="Cascade Inference" width="800"/>
 <br>
-Figure 2. Workflow of Cascade Inference, throughput values adapted from blog: <a href="https://khairy2011.medium.com/tpu-vs-gpu-vs-cerebras-vs-graphcore-a-fair-comparison-between-ml-hardware-3f5a19d89e38">TPU vs GPU vs Cerebras vs Graphcore: A Fair Comparison between ML Hardware</a>
+Figure 3. Workflow of Cascade Inference, throughput values adapted from blog: <a href="https://khairy2011.medium.com/tpu-vs-gpu-vs-cerebras-vs-graphcore-a-fair-comparison-between-ml-hardware-3f5a19d89e38">TPU vs GPU vs Cerebras vs Graphcore: A Fair Comparison between ML Hardware</a>
 </p>
 
 We call the divide-and-conquer approach for shared-prefix attention the "Cascade Inference".
@@ -95,16 +95,16 @@ We evaluate Cascade Inference on H100 SXM 80GB and A100 PCIE 80GB GPUs. The inpu
 <p align="center">
 <img src="/assets/imgs/cascade-inference-performance-h100.png" alt="speedup-h100" width="800"/>
 <br>
-Figure 3. Speedup over vLLM PageAttention on H100 SXM 80GB
+Figure 4. Speedup over vLLM PageAttention on H100 SXM 80GB
 </p>
 
 <p align="center">
 <img src="/assets/imgs/cascade-inference-performance-a100.png" alt="speedup-a100" width="800"/>
 <br>
-Figure 4. Speedup over vLLM PageAttention on A100 PCIe 80GB
+Figure 5. Speedup over vLLM PageAttention on A100 PCIe 80GB
 </p>
 
-Figure 3 and 4 show the normalized performance on FlashInfer kernels in cascading and non-cascading setting
+Figure 4 and 5 show the normalized performance on FlashInfer kernels in cascading and non-cascading setting
 over vLLM implementation. FlashInfer kernels in both settings outperforms vLLM kernels, and cascading kernels significant speedup over non-Cascade Inference kernels in most cases.
 The benefit of cascade inference increases as shared prefix length and batch size grows (where the prefill kernel dominates execution time) and decreases as we increase unique suffix length (where the batch decode kernel dominates execution time). For very long shared prompt (32768), the decode kernel can get up to 31x speedup on H100 SXM 80GB with large batch size(≥128) and short unique kv-length (≤256).
 
