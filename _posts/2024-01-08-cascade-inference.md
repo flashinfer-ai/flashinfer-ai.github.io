@@ -114,7 +114,20 @@ The idea of Cascade Inference can be generalized to multiple levels (we only sho
 
 Recently, [SGLang](https://arxiv.org/abs/2312.07104) (a domain-specific language for programming LLMs) proposes RadixAttention, where the KV-Cache is organized as a radix tree structure and the attention can be further accelerated with multiple-level Cascade Inference. We are collaborating with SGLang team to get this feature landed.
 
+## Citation
+
+```bibtex
+@misc{cascade-inference,
+    title = {Cascade Inference: Memory Bandwidth Efficient Shared Prefix Batch Decoding},
+    url = {https://flashinfer.ai/2024/02/02/cascade-inference.html},
+    author = {Ye, Zihao and Lai, Ruihang and Lu, Bo-Ru and Lin, Chien-Yu and Zheng, Size and Chen, Lequn and Chen, Tianqi and Ceze, Luis},
+    month = {February},
+    year = {2024}
+}
+```
+
 ## Footnotes & References
 
 [^1]: thread block: the programming abstraction that represents a group of cooperative threads, one SM can execute multiple thread blocks and one thread block cannot span multiple SMs.
 [^2]: [Hopper architecture](https://resources.nvidia.com/en-us-tensor-core) introduces a new abstraction called Thread Block Clusters which enables a thread block to access shared memory of other thread blocks within the same SM. Hopper also supports direct SM-to-SM communication without accessing global memory (a.k.a. Distributed Shared Memory), which can greatly accelerate cross-SM communication. However, these features are not available in pre-Hopper architectures such as A100 GPUs.
+

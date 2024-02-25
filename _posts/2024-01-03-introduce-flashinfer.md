@@ -242,5 +242,17 @@ This blog post is written by [Zihao Ye](https://homes.cs.washington.edu/~zhye/).
 
 We also thank Masahiro Masuda (OctoAI), Yixin Dong (UW & SJTU), Roy Lu (UW), Chien-Yu Lin (UW), Ying Sheng (Stanford & LMSys) and Lianmin Zheng (Berkeley & LMSys) for their valuable feedbacks and discussions.
 
+## Citation
+
+```bibtex
+@misc{flashinfer,
+    title = {Accelerating Self-Attentions for LLM Serving with FlashInfer},
+    url = {https://flashinfer.ai/2024/02/02/introduce-flashinfer.html},
+    author = {Ye, Zihao and Chen, Lequn and Lai, Ruihang and Zhao, Yilong and Zheng, Size and Shao, Junru and Hou, Bohan and Jin, Hongyi and Zuo, Yifei and Yin, Liangsheng and Chen, Tianqi and Ceze, Luis},
+    month = {February},
+    year = {2024}
+}
+```
+
 ## Footnotes
 [^1]: [Dissecting Batching Effects in GPT Inference](https://le.qun.ch/en/blog/2023/05/13/transformer-batching/) by Lequn Chen
