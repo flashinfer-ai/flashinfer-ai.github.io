@@ -56,7 +56,7 @@ We have optimized the speed of JIT compilation by minimizing header dependencies
 
 ## Fused Multi-head Latent Attention (MLA) Decoding Kernel
 
-**Multi-head Latent Attention (MLA)**, introduced in [Deepseek v0.2](https://arxiv.org/pdf/2405.04434), compresses the KV-Cache by projecting it into low-rank matrices. Achieving high throughput for MLA is challenging due to a lack of optimized kernels. FlashInfer community recently implemented an fused kernel with the **Matrix Absorption trick**, improving memory efficiency. See [#551](https://github.com/flashinfer-ai/flashinfer/pull/551) for detailed explanation.
+**Multi-head Latent Attention (MLA)**, introduced in [Deepseek v2](https://arxiv.org/pdf/2405.04434), compresses the KV-Cache by projecting it into low-rank matrices. Achieving high throughput for MLA is challenging due to a lack of optimized kernels. FlashInfer community recently implemented an fused kernel with the **Matrix Absorption trick**, improving memory efficiency. See [#551](https://github.com/flashinfer-ai/flashinfer/pull/551) for detailed explanation.
 
 <p align="center">
 <img src="/assets/imgs/mla.png" alt="MLA" width="800"/>
