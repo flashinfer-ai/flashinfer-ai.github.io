@@ -53,5 +53,3 @@ plugins:
 #   - vendor/ruby/
 
 markdown: kramdown
-disqus:
-  shortname: flashinfer-ai
