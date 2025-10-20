@@ -8,11 +8,11 @@ author: FlashInfer Community
 ---
 [**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer_trace/flashinfer_trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
 
-> *Have you ever imagined an AI system that improves itself?*  
+> Have you ever imagined an AI system that improves itself?*  
 >
-> *—Not exactly the machine overlords from sci-fi, but still, an AI system that can expand its capabilities using AI itself sounds pretty cool.*  
+> —Not exactly the machine overlords from sci-fi, but still, an AI system that can expand its capabilities using AI itself sounds pretty cool.
 >
-> *—And it is something we’re building: **FlashInfer-Bench**—a benchmark and infrastructure that **opens the pathway for AI to accelerate real-world AI deployment**.*
+> —And it is something we’re building: **FlashInfer-Bench**—a benchmark and infrastructure that **opens the pathway for AI to accelerate real-world AI deployment**.
 
 AI agents have become remarkably powerful, capable of writing complex code and even building sophisticated systems. Such powerful capabilities naturally lead us to wonder: can AI agents optimize the very production systems they run on? At the heart of these AI systems, the most intensive parts are GPU kernels—the low-level programs that perform the core operations for AI models. We have seen amazing progress recently that shows LLMs can generate reasonable GPU kernels (https://scalingintelligence.stanford.edu/blogs/kernelbench/).
 
