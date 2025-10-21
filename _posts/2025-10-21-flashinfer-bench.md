@@ -197,7 +197,7 @@ We thank the entire FlashInfer-Bench team for their contributions to the project
 * Zihao Ye (NVIDIA): FlashInfer support  
 * Charlie Ruan (UC Berkeley): Workload tracing system  
 * Yingyi Huang (CMU): Fused MOE  
-* Yineng Zhang (Together AI): SGLang integration  
+* Yineng Zhang (Independent researcher): SGLang integration  
 * Liangsheng Yin (Independent researcher): SGLang integration  
 * Aksara Bayyapu (CMU): LLM agents  
 * Luis Ceze (UW, NVIDIA): Project guidance and advice  
