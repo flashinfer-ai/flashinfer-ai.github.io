@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "FlashInfer-Bench: Building the Virtuous Cycle for AI-driven LLM Systems"
-date:  2025-10-20
+date:  2025-10-21
 comments: true
 usematjax: true
 author: FlashInfer Community
