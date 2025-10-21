@@ -145,10 +145,6 @@ By using `apply()`, we can replace a large number of operators in FlashInfer. If
 ## FlashInfer-Bench Leaderboard — The Arena for LLM Kernel Optimization
 
 <figure>
-  <img src="/assets/imgs/flashinfer-bench/image16.png" alt="FlashInfer-Bench leaderboard screenshot" />
-</figure>
-
-<figure>
   <img src="/assets/imgs/flashinfer-bench/image15.png" alt="FlashInfer-Bench leaderboard screenshot" />
 </figure>
 
@@ -178,10 +174,10 @@ Looking ahead, we plan to continually expand our coverage of models and kernels.
 
 For more information, please visit the following links:
 
-* Leaderboard (https://bench.flashinfer.ai/)  
-* FlashInfer-Bench Dataset (https://huggingface.co/datasets/flashinfer-ai/flashinfer-trace)
-* FlashInfer-Bench Python Package (https://github.com/flashinfer-ai/flashinfer-bench/)
-* Documentation (https://bench.flashinfer.ai/docs)
+* [Leaderboard](https://bench.flashinfer.ai/)
+* [FlashInfer-Bench Dataset](https://huggingface.co/datasets/flashinfer-ai/flashinfer-trace)
+* [FlashInfer-Bench Python Package](https://github.com/flashinfer-ai/flashinfer-bench/)
+* [Documentation](https://bench.flashinfer.ai/docs)
 
 ## Acknowledgements
 
