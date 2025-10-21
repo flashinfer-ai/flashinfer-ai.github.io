@@ -40,7 +40,7 @@ FlashInfer-Bench is designed specifically to address these three challenges. As 
 
 - **Set the right goal — FlashInfer-Bench Dataset.** We collected and curated the most important kernels used in production, along with their real workloads, to create a dataset. This allows us to measure kernel performance under real traffic conditions and further makes it possible to concretely improve production systems.
 
-- **Establish a 0-day production path – First-class FlashInfer Integration.** We build first-class integration with FlashInfer – an open LLM kernel library widely used in major LLM inference engines. Our solution can dynamically replace the FlashInfer Kernels with the best-performing kernels, as evaluated using the FlashInfer Trace and the FlashInfer-Bench dataset. This enables activating the best kernels in LLM engines and testing end-to-end performance with minimal effort.
+- **Establish a 0-day production path — First-class FlashInfer Integration.** We build first-class integration with FlashInfer — an open LLM kernel library widely used in major LLM inference engines. Our solution can dynamically replace the FlashInfer Kernels with the best-performing kernels, as evaluated using the FlashInfer Trace and the FlashInfer-Bench dataset. This enables activating the best kernels in LLM engines and testing end-to-end performance with minimal effort.
 
 In the rest of the post, we will walk through the details about the three main elements. 
 
