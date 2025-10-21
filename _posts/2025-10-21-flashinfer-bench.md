@@ -6,7 +6,7 @@ comments: true
 usemathjax: true
 author: FlashInfer Community
 ---
-[**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer_trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
+[**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer-trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
 
 > Have you ever imagined an AI system that improves itself?*  
 >
