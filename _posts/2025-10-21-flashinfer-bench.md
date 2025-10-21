@@ -181,7 +181,7 @@ For more information, please visit the following links:
 
 ## Acknowledgements
 
-Flashinfer-Bench is a research effort initiated in collaboration with CMU Catalyst, NVIDIA, and Bosch. We are bringing up an open community as part of the FlashInfer community and welcome contributions from the ML systems community.
+FlashInfer-Bench is a research effort initiated in collaboration with CMU Catalyst, NVIDIA, and Bosch. We are bringing up an open community as part of the FlashInfer community and welcome contributions from the ML systems community.
 
 We thank the entire FlashInfer-Bench team for their contributions to the project:
 
