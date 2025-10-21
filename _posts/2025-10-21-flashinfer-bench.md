@@ -3,7 +3,7 @@ layout: post
 title:  "FlashInfer-Bench: Building the Virtuous Cycle for AI-driven LLM Systems"
 date:  2025-10-21
 comments: true
-usematjax: true
+usemathjax: true
 author: FlashInfer Community
 ---
 [**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer_trace/flashinfer_trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
