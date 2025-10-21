@@ -6,7 +6,7 @@ comments: true
 usemathjax: true
 author: FlashInfer Community
 ---
-[**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer_trace/flashinfer_trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
+[**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer_trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
 
 > Have you ever imagined an AI system that improves itself?*  
 >
@@ -143,6 +143,10 @@ It takes a lambda function that maps the inputs to a specific kernel definition 
 By using `apply()`, we can replace a large number of operators in FlashInfer. If you want to replace operators from your own implementations or other libraries, you can also easily achieve this with `apply()`.
 
 ## FlashInfer-Bench Leaderboard — The Arena for LLM Kernel Optimization
+
+<figure>
+  <img src="/assets/imgs/flashinfer-bench/image16.png" alt="FlashInfer-Bench leaderboard screenshot" />
+</figure>
 
 <figure>
   <img src="/assets/imgs/flashinfer-bench/image15.png" alt="FlashInfer-Bench leaderboard screenshot" />
