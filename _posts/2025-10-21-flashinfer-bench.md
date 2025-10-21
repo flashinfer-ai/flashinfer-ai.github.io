@@ -8,7 +8,7 @@ author: FlashInfer Community
 ---
 [**Leaderboard**](https://bench.flashinfer.ai) &nbsp;|&nbsp; [**FlashInfer Trace**](https://bench.flashinfer.ai/docs/flashinfer-trace) &nbsp;|&nbsp; [**GitHub**](https://github.com/flashinfer-ai/flashinfer-bench)
 
-> Have you ever imagined an AI system that improves itself?*  
+> Have you ever imagined an AI system that improves itself?  
 >
 > —Not exactly the machine overlords from sci-fi, but still, an AI system that can expand its capabilities using AI itself sounds pretty cool.
 >
