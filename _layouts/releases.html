@@ -55,15 +55,14 @@ layout: default
         <h2 class="release-version">
           <a href="#{{ anchor }}" class="release-anchor">{{ release.tag }}</a>
         </h2>
+        <p class="release-changelog">
+          <a href="{{ repo }}/releases/tag/{{ release.tag }}">Full changelog for {{ release.tag }} on GitHub &rarr;</a>
+        </p>
       </header>
 
       <div class="release-body">
         {{ release.content | markdownify }}
       </div>
-
-      <p class="release-footer">
-        <a href="{{ repo }}/releases/tag/{{ release.tag }}">Full changelog for {{ release.tag }} on GitHub &rarr;</a>
-      </p>
     </section>
     {%- endfor -%}
 

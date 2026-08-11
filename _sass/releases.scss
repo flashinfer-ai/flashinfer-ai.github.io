@@ -121,7 +121,7 @@ $releases-gutter: $spacing-unit * 1.75;
   // Cap the measure at roughly 70 characters. The nav needs the page to be wide,
   // but prose this wide is hard to track line-to-line.
   max-width: 42em;
-  @include relative-font-size(1.0625);
+  // Body stays at the 16px base; the airiness comes from leading, not size.
   line-height: 1.75;
 
   // Minima's blanket 15px paragraph gap is only about half a line at this
@@ -167,6 +167,14 @@ $releases-gutter: $spacing-unit * 1.75;
   margin-bottom: $spacing-unit / 2;
 }
 
+// Sits directly under the version heading, so it reads as part of the header
+// rather than as body copy.
+.release-changelog {
+  @include relative-font-size(0.875);
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 .release-date {
   @include relative-font-size(0.8125);
   text-transform: uppercase;
@@ -194,12 +202,11 @@ $releases-gutter: $spacing-unit * 1.75;
 }
 
 .release-body {
-  // The first paragraph of each entry is the summary; give it a little weight.
-  // (relative-font-size is absolute off $base-font-size, so this has to exceed
-  // the 1.0625 the stream already sets or the lead won't read as a lead.)
+  // The first paragraph of each entry is the summary; one step up from the
+  // 16px body so it reads as a lead.
   > p:first-child {
-    @include relative-font-size(1.125);
-    line-height: 1.6;
+    @include relative-font-size(1.0625);
+    line-height: 1.65;
     color: $grey-color-dark;
   }
 
