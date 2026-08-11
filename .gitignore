@@ -1,5 +1,7 @@
 *.pdf
 *.py
+# ...but the site's own tooling lives in scripts/ and must be tracked.
+!scripts/*.py
 *.pyc
 __pycache__
 .DS_Store
