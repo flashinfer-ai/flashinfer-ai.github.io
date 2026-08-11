@@ -14,7 +14,7 @@ layout: default
 
   <aside class="releases-nav" aria-label="Releases">
     <nav class="releases-nav-inner">
-      <p class="releases-nav-title">{{ page.title | default: "Releases" }}</p>
+      <p class="releases-nav-title">{{ page.nav_title | default: page.title | default: "Releases" }}</p>
       <ul class="releases-nav-list">
         {%- for release in releases -%}
         {%- assign anchor = release.tag | replace: ".", "-" -%}
