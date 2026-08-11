@@ -8,16 +8,24 @@
 $releases-nav-width: 190px;
 $releases-gutter: $spacing-unit * 1.75;
 
-// The releases page needs more room than the 900px article wrapper, so it opts
-// in via `body_class: releases-page` (see `_layouts/default.html`).
+// Wide enough for the nav column plus a comfortable reading measure, and no
+// wider -- the page opts in via `body_class: releases-page` (see
+// `_layouts/default.html`).
 .releases-page .wrapper {
-  max-width: -webkit-calc(1180px - (#{$spacing-unit} * 2));
-  max-width:         calc(1180px - (#{$spacing-unit} * 2));
+  max-width: -webkit-calc(1024px - (#{$spacing-unit} * 2));
+  max-width:         calc(1024px - (#{$spacing-unit} * 2));
+
+  // Long-form reading: slightly larger text, looser leading, and the smoothing
+  // that makes the system stack look like the reference design on macOS.
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .releases {
   display: flex;
-  align-items: flex-start;
+  // No `align-items: flex-start` here on purpose: the nav column has to stretch
+  // to the full height of the stream, otherwise the sticky panel inside it has
+  // no room to travel and scrolls away with the page.
   padding-top: $spacing-unit / 2;
 }
 
@@ -110,6 +118,11 @@ $releases-gutter: $spacing-unit * 1.75;
   flex: 1 1 auto;
   // Without this, long code spans / URLs blow the flex item past its share.
   min-width: 0;
+  // Cap the measure at roughly 70 characters. The nav needs the page to be wide,
+  // but prose this wide is hard to track line-to-line.
+  max-width: 42em;
+  @include relative-font-size(1.0625);
+  line-height: 1.65;
 }
 
 .releases-intro {
@@ -175,15 +188,20 @@ $releases-gutter: $spacing-unit * 1.75;
 
 .release-body {
   // The first paragraph of each entry is the summary; give it a little weight.
+  // (relative-font-size is absolute off $base-font-size, so this has to exceed
+  // the 1.0625 the stream already sets or the lead won't read as a lead.)
   > p:first-child {
-    @include relative-font-size(1.0625);
+    @include relative-font-size(1.125);
+    line-height: 1.55;
     color: $grey-color-dark;
   }
 
   h3 {
-    @include relative-font-size(1.125);
+    @include relative-font-size(1.1875);
     font-weight: 600;
-    margin-top: $spacing-unit;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    margin-top: $spacing-unit * 1.1;
     margin-bottom: $spacing-unit / 4;
   }
 
@@ -200,19 +218,32 @@ $releases-gutter: $spacing-unit * 1.75;
 }
 
 /**
- * Row of PR references closing out each highlight.
+ * PR references closing out each highlight: one per row, the number in a pill
+ * and the PR title alongside it.
  */
 .pr-list {
-  @include relative-font-size(0.8125);
-  margin-top: -($spacing-unit / 4);
+  @include relative-font-size(0.875);
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 5px;
+    line-height: 1.45;
+  }
 
   a {
-    display: inline-block;
-    margin: 4px 6px 0 0;
+    // Fixed width keeps every title starting on the same column.
+    flex: none;
+    min-width: 62px;
+    margin-right: 10px;
     padding: 1px 8px;
     border: 1px solid $grey-color-light;
     border-radius: 10px;
     color: $grey-color-dark;
+    text-align: center;
     font-variant-numeric: tabular-nums;
 
     &:hover {
@@ -221,6 +252,11 @@ $releases-gutter: $spacing-unit * 1.75;
       text-decoration: none;
     }
   }
+}
+
+.pr-title {
+  color: $grey-color-dark;
+  min-width: 0;
 }
 
 

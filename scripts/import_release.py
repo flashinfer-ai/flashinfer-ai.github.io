@@ -40,6 +40,7 @@ PR_LINE = re.compile(
 BOLD_HEADING = re.compile(r"^\*\*(?P<text>.+?)\*\*:?\s*$")
 HIGHLIGHTS_HEADING = re.compile(r"^#+\s*(v?[\d.]+\s+)?highlights\s*$", re.IGNORECASE)
 SHALLOW_HEADING = re.compile(r"^(#{1,2})\s+(?P<text>.+?)\s*$")
+PR_PLACEHOLDER = "\x00PR_LIST:{}\x00"
 CHANGELOG_HEADING = re.compile(r"^#+\s*(what'?s changed|new contributors)\s*$", re.IGNORECASE)
 
 
@@ -55,9 +56,59 @@ def fetch(tag):
     return data["body"].replace("\r\n", "\n"), data["publishedAt"]
 
 
+def fetch_pr_titles(numbers):
+    """Map PR number -> title, in as few round trips as possible."""
+    owner, name = REPO.split("/")
+    titles = {}
+    numbers = sorted(set(numbers))
+    # One aliased GraphQL query per chunk beats one REST call per PR.
+    for start in range(0, len(numbers), 50):
+        chunk = numbers[start : start + 50]
+        fields = "\n".join(
+            f'  p{n}: pullRequest(number: {n}) {{ title }}' for n in chunk
+        )
+        query = f'query {{ repository(owner: "{owner}", name: "{name}") {{\n{fields}\n}} }}'
+        out = subprocess.run(
+            ["gh", "api", "graphql", "-f", f"query={query}"],
+            capture_output=True,
+            text=True,
+        )
+        if out.returncode:
+            sys.exit(f"gh graphql failed: {out.stderr.strip()}")
+        repo_data = json.loads(out.stdout)["data"]["repository"]
+        for n in chunk:
+            node = repo_data.get(f"p{n}")
+            if node:
+                titles[n] = node["title"]
+    return titles
+
+
+def escape(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def render_pr_list(numbers, titles):
+    """One PR per row: a pill holding the number, then the title beside it."""
+    rows = []
+    for n in numbers:
+        # PR titles occasionally carry stray leading/trailing whitespace.
+        title = (titles.get(n) or "").strip()
+        label = f' <span class="pr-title">{escape(title)}</span>' if title else ""
+        rows.append(
+            f'<li><a href="https://github.com/{REPO}/pull/{n}">#{n}</a>{label}</li>'
+        )
+    return '<ul class="pr-list">\n' + "\n".join(rows) + "\n</ul>"
+
+
 def convert(body):
+    """Return (markdown, pr_runs).
+
+    PR runs are left as placeholders so their titles can be fetched in one
+    batch afterwards rather than one request per run.
+    """
     lines = body.split("\n")
     out = []
+    pr_runs = []
     i = 0
     in_code = False
 
@@ -83,19 +134,17 @@ def convert(body):
             i += 1
             continue
 
-        # Gather a run of PR references into one chip row.
+        # Gather a run of PR references into one list.
         if PR_LINE.match(line):
             nums = []
             while i < len(lines):
                 m = PR_LINE.match(lines[i])
                 if not m:
                     break
-                nums.append(m.group("num") or m.group("url_num"))
+                nums.append(int(m.group("num") or m.group("url_num")))
                 i += 1
-            links = "".join(
-                f'<a href="https://github.com/{REPO}/pull/{n}">#{n}</a>' for n in nums
-            )
-            out.append(f'<p class="pr-list">{links}</p>')
+            pr_runs.append(nums)
+            out.append(PR_PLACEHOLDER.format(len(pr_runs) - 1))
             continue
 
         heading = BOLD_HEADING.match(line.strip())
@@ -117,7 +166,7 @@ def convert(body):
     # Collapse runs of blank lines and trim.
     text = "\n".join(out)
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
-    return text
+    return text, pr_runs
 
 
 def main():
@@ -128,12 +177,16 @@ def main():
     args = ap.parse_args()
 
     body, published = fetch(args.tag)
-    content = convert(body)
+    content, pr_runs = convert(body)
     if not content:
         sys.exit(
             f"{args.tag} has no hand-written highlights -- only the auto-generated "
             "changelog. Nothing to publish."
         )
+
+    titles = fetch_pr_titles([n for run in pr_runs for n in run])
+    for idx, run in enumerate(pr_runs):
+        content = content.replace(PR_PLACEHOLDER.format(idx), render_pr_list(run, titles))
 
     # GitHub gives "2026-07-31T07:55:09Z"; Jekyll wants "2026-07-31 07:55:09 +0000".
     date = published.replace("T", " ").replace("Z", " +0000")
