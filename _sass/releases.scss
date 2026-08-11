@@ -122,7 +122,14 @@ $releases-gutter: $spacing-unit * 1.75;
   // but prose this wide is hard to track line-to-line.
   max-width: 42em;
   @include relative-font-size(1.0625);
-  line-height: 1.65;
+  line-height: 1.75;
+
+  // Minima's blanket 15px paragraph gap is only about half a line at this
+  // leading, which is what makes the column read dense. Long-form wants the gap
+  // to be close to a full line so paragraphs separate at a glance.
+  p, ul, ol, blockquote, pre {
+    margin-bottom: 1.35em;
+  }
 }
 
 .releases-intro {
@@ -192,7 +199,7 @@ $releases-gutter: $spacing-unit * 1.75;
   // the 1.0625 the stream already sets or the lead won't read as a lead.)
   > p:first-child {
     @include relative-font-size(1.125);
-    line-height: 1.55;
+    line-height: 1.6;
     color: $grey-color-dark;
   }
 
@@ -201,8 +208,9 @@ $releases-gutter: $spacing-unit * 1.75;
     font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.35;
-    margin-top: $spacing-unit * 1.1;
-    margin-bottom: $spacing-unit / 4;
+    // Bind the heading to the text it introduces: more space above than below.
+    margin-top: $spacing-unit * 1.4;
+    margin-bottom: $spacing-unit / 3;
   }
 
   blockquote {
