@@ -27,7 +27,11 @@ layout: default
         {%- endfor -%}
       </ul>
       <p class="releases-nav-foot">
-        <a href="{{ repo }}/releases">All releases on GitHub &rarr;</a>
+        {%- comment -%}
+          Filtered to exclude prereleases: the unfiltered list is dominated by
+          nightlies and rcs, which is not what someone clicking through wants.
+        {%- endcomment -%}
+        <a href="{{ repo }}/releases?q=prerelease%3Afalse">All releases on GitHub &rarr;</a>
       </p>
     </nav>
   </aside>
