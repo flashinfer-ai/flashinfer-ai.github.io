@@ -9,5 +9,6 @@ body_class: releases-page
 description: Highlights from each FlashInfer release.
 ---
 
-What's new in each FlashInfer release. Every entry links to the full,
-auto-generated changelog on GitHub.
+Editorial highlights for users deciding whether a release matters to their
+models, hardware, or serving stack — not a complete changelog. GitHub's
+generated release notes remain the full inventory.

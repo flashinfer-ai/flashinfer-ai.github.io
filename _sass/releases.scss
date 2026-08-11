@@ -144,8 +144,13 @@ $releases-gutter: $spacing-unit * 1.75;
     margin-bottom: $spacing-unit / 4;
   }
 
+  // Standing note about what the page is; deliberately quiet so it does not
+  // compete with the first release.
   p {
-    color: $grey-color-dark;
+    @include relative-font-size(0.8125);
+    line-height: 1.5;
+    color: $grey-color;
+    max-width: 34em;
   }
 
   > :last-child {
