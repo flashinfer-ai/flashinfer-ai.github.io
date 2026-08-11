@@ -53,3 +53,25 @@ plugins:
 #   - vendor/ruby/
 
 markdown: kramdown
+
+# Release highlights.
+#
+# Each file in `_releases/` holds the hand-written highlights for one release --
+# the same prose we prepend to the auto-generated changelog on the GitHub release
+# page. `output: false` because these are not standalone pages: `releases.md`
+# renders every entry into one continuous page with a sticky side nav.
+#
+# See README.md for how to add an entry (`scripts/import_release.sh` does it).
+collections:
+  releases:
+    output: false
+
+# Repo that release entries link back to, used by the releases layout.
+flashinfer_repo: https://github.com/flashinfer-ai/flashinfer
+
+exclude:
+  - README.md
+  - scripts/
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
