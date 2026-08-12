@@ -3,7 +3,11 @@
 
   {%- include head.html -%}
 
-  <body>
+  {%- comment -%}
+    `body_class` lets a page opt into a wider content wrapper (see releases.scss).
+    Empty for every other page, which keeps the default 900px wrapper.
+  {%- endcomment -%}
+  <body{% if page.body_class %} class="{{ page.body_class | escape }}"{% endif %}>
 
     {%- include header.html -%}
 

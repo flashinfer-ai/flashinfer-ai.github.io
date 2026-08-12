@@ -1,0 +1,134 @@
+---
+layout: default
+---
+{%- comment -%}
+  Renders every document in the `releases` collection as one continuous page
+  with a sticky version nav on the left. Newest release first.
+
+  Each entry lives in `_releases/<tag>.md`; see README.md.
+{%- endcomment -%}
+{%- assign releases = site.releases | sort: "date" | reverse -%}
+{%- assign repo = site.flashinfer_repo | default: "https://github.com/flashinfer-ai/flashinfer" -%}
+
+<div class="releases">
+
+  <aside class="releases-nav" aria-label="Releases">
+    <nav class="releases-nav-inner">
+      <p class="releases-nav-title">{{ page.nav_title | default: page.title | default: "Releases" }}</p>
+      <ul class="releases-nav-list">
+        {%- for release in releases -%}
+        {%- assign anchor = release.tag | replace: ".", "-" -%}
+        <li>
+          <a href="#{{ anchor }}" data-anchor="{{ anchor }}">
+            <span class="releases-nav-version">{{ release.tag }}</span>
+            <span class="releases-nav-date">{{ release.date | date: "%b %-d, %Y" }}</span>
+          </a>
+        </li>
+        {%- endfor -%}
+      </ul>
+      <p class="releases-nav-foot">
+        {%- comment -%}
+          Filtered to exclude prereleases: the unfiltered list is dominated by
+          nightlies and rcs, which is not what someone clicking through wants.
+        {%- endcomment -%}
+        <a href="{{ repo }}/releases?q=prerelease%3Afalse">All releases on GitHub &rarr;</a>
+      </p>
+    </nav>
+  </aside>
+
+  <div class="releases-stream">
+
+    {%- if content != "" -%}
+    <div class="releases-intro">
+      <h1>{{ page.title | default: "Releases" }}</h1>
+      {{ content }}
+    </div>
+    {%- endif -%}
+
+    {%- for release in releases -%}
+    {%- assign anchor = release.tag | replace: ".", "-" -%}
+    <section class="release" id="{{ anchor }}">
+      <header class="release-header">
+        <p class="release-date">
+          <time datetime="{{ release.date | date_to_xmlschema }}">{{ release.date | date: "%B %-d, %Y" }}</time>
+        </p>
+        <h2 class="release-version">
+          <a href="#{{ anchor }}" class="release-anchor">{{ release.tag }}</a>
+        </h2>
+        <p class="release-changelog">
+          <a href="{{ repo }}/releases/tag/{{ release.tag }}">Full changelog for {{ release.tag }} on GitHub &rarr;</a>
+        </p>
+      </header>
+
+      <div class="release-body">
+        {{ release.content | markdownify }}
+      </div>
+    </section>
+    {%- endfor -%}
+
+    {%- if releases.size == 0 -%}
+    <p>No release highlights published yet.</p>
+    {%- endif -%}
+
+  </div>
+</div>
+
+<script>
+  // Highlight the nav entry for whichever release is currently at the top of the
+  // viewport. Plain scroll math rather than IntersectionObserver so that the
+  // "last section when scrolled to the bottom" case stays predictable.
+  (function () {
+    var links = document.querySelectorAll('.releases-nav a[data-anchor]');
+    var sections = document.querySelectorAll('.release[id]');
+    if (!links.length || !sections.length) return;
+
+    var navList = document.querySelector('.releases-nav-inner');
+    var active = null;
+
+    function setActive(id) {
+      if (id === active) return;
+      active = id;
+      for (var i = 0; i < links.length; i++) {
+        var link = links[i];
+        var on = link.getAttribute('data-anchor') === id;
+        if (on) {
+          link.classList.add('is-active');
+          link.setAttribute('aria-current', 'true');
+          // Keep the marker visible once the list outgrows the sidebar.
+          if (navList && navList.scrollHeight > navList.clientHeight) {
+            var top = link.offsetTop, bottom = top + link.offsetHeight;
+            if (top < navList.scrollTop) navList.scrollTop = top;
+            else if (bottom > navList.scrollTop + navList.clientHeight) {
+              navList.scrollTop = bottom - navList.clientHeight;
+            }
+          }
+        } else {
+          link.classList.remove('is-active');
+          link.removeAttribute('aria-current');
+        }
+      }
+    }
+
+    function update() {
+      var current = sections[0];
+      for (var i = 0; i < sections.length; i++) {
+        // 120px so a heading counts as "current" just before it hits the top.
+        if (sections[i].getBoundingClientRect().top - 120 <= 0) current = sections[i];
+      }
+      // At the very bottom the last release may be too short to ever reach the
+      // trigger line, so pin it explicitly.
+      if (window.innerHeight + window.pageYOffset >= document.body.offsetHeight - 2) {
+        current = sections[sections.length - 1];
+      }
+      setActive(current.id);
+    }
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    // A `#v0-6-16` deep link scrolls the page after this script runs and without
+    // firing a scroll event, so re-check once the browser has settled.
+    window.addEventListener('hashchange', update);
+    window.addEventListener('load', update);
+    update();
+  })();
+</script>
