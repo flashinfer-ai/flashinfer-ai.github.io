@@ -31,8 +31,6 @@ theme: minima
 plugins:
   - jekyll-feed
   - jekyll-redirect-from
-  # Generates /sitemap.xml, which was previously a 404. On the GitHub Pages
-  # allowlist, so the default build picks it up with no other change.
   - jekyll-sitemap
 
 # Exclude from processing.
