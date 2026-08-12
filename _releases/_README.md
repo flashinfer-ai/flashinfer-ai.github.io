@@ -28,6 +28,9 @@ Body text.
   newest first, and `tag` becomes the heading and the `#v0-6-17` anchor.
 - Sections start at `###`. The page spends `<h1>` on its own title and `<h2>`
   on the version.
+- Link to a release with its version anchor, `#v0-6-17`. Section headings get
+  ids generated per entry with no cross-entry dedup, so two releases sharing a
+  section title would produce the same id; treat heading anchors as unstable.
 - PR references use the markup above rather than a Markdown list: bare `#1234`
   auto-links on GitHub but not here, and the row layout is styled in
   `_sass/releases.scss`.

@@ -64,16 +64,24 @@ def fetch(tag):
     return data["body"].replace("\r\n", "\n"), data["publishedAt"]
 
 
-def fetch_pr_titles(numbers):
-    """Map PR number -> title, in as few round trips as possible."""
+def fetch_refs(numbers):
+    """Map number -> {title, url}, in as few round trips as possible.
+
+    Uses `issueOrPullRequest` because a release note can reference an issue as
+    readily as a PR: `pullRequest(number:)` answers NOT_FOUND for an issue and
+    takes the whole query down with it. It also gives the right URL per type,
+    rather than assuming /pull/.
+    """
     owner, name = REPO.split("/")
-    titles = {}
+    refs = {}
     numbers = sorted(set(numbers))
-    # One aliased GraphQL query per chunk beats one REST call per PR.
+    # One aliased GraphQL query per chunk beats one REST call per reference.
     for start in range(0, len(numbers), 50):
         chunk = numbers[start : start + 50]
         fields = "\n".join(
-            f'  p{n}: pullRequest(number: {n}) {{ title }}' for n in chunk
+            f"  p{n}: issueOrPullRequest(number: {n}) {{"
+            " ... on PullRequest { title url } ... on Issue { title url } }"
+            for n in chunk
         )
         query = f'query {{ repository(owner: "{owner}", name: "{name}") {{\n{fields}\n}} }}'
         out = subprocess.run(
@@ -82,30 +90,34 @@ def fetch_pr_titles(numbers):
             text=True,
             encoding="utf-8",
         )
-        if out.returncode:
-            sys.exit(f"gh graphql failed: {out.stderr.strip()}")
-        repo_data = json.loads(out.stdout)["data"]["repository"]
+        # gh exits non-zero on any GraphQL error but still prints the body, and
+        # a single unresolvable number should not lose the rest of the batch.
+        try:
+            repo_data = json.loads(out.stdout)["data"]["repository"]
+        except (ValueError, KeyError, TypeError):
+            sys.exit(f"gh graphql failed: {out.stderr.strip() or out.stdout.strip()}")
         for n in chunk:
             node = repo_data.get(f"p{n}")
             if node:
-                titles[n] = node["title"]
-    return titles
+                refs[n] = node
+    return refs
 
 
 def escape(text):
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render_pr_list(numbers, titles):
-    """One PR per row: a pill holding the number, then the title beside it."""
+def render_pr_list(numbers, refs):
+    """One reference per row: a pill holding the number, then the title beside it."""
     rows = []
     for n in numbers:
-        # PR titles occasionally carry stray leading/trailing whitespace.
-        title = (titles.get(n) or "").strip()
+        ref = refs.get(n) or {}
+        # Titles occasionally carry stray leading/trailing whitespace.
+        title = (ref.get("title") or "").strip()
+        # Anything unresolved still renders, linked by number.
+        url = ref.get("url") or f"https://github.com/{REPO}/pull/{n}"
         label = f' <span class="pr-title">{escape(title)}</span>' if title else ""
-        rows.append(
-            f'<li><a href="https://github.com/{REPO}/pull/{n}">#{n}</a>{label}</li>'
-        )
+        rows.append(f'<li><a href="{url}">#{n}</a>{label}</li>')
     return '<ul class="pr-list">\n' + "\n".join(rows) + "\n</ul>"
 
 
@@ -202,9 +214,9 @@ def main():
             "changelog. Nothing to publish."
         )
 
-    titles = fetch_pr_titles([n for run in pr_runs for n in run])
+    refs = fetch_refs([n for run in pr_runs for n in run])
     for idx, run in enumerate(pr_runs):
-        content = content.replace(PR_PLACEHOLDER.format(idx), render_pr_list(run, titles))
+        content = content.replace(PR_PLACEHOLDER.format(idx), render_pr_list(run, refs))
 
     # GitHub gives "2026-07-31T07:55:09Z"; Jekyll wants "2026-07-31 07:55:09 +0000".
     date = published.replace("T", " ").replace("Z", " +0000")

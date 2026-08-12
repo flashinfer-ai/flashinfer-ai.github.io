@@ -69,10 +69,13 @@ collections:
 # Repo that release entries link back to, used by the releases layout.
 flashinfer_repo: https://github.com/flashinfer-ai/flashinfer
 
+# Setting this replaces Jekyll's defaults rather than adding to them, so the
+# defaults worth keeping are repeated here.
 exclude:
   - README.md
   - CLAUDE.md
   - scripts/
   - Gemfile
   - Gemfile.lock
+  - node_modules/
   - vendor/
