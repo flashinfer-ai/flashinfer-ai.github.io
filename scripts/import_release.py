@@ -217,10 +217,14 @@ def main():
         return
 
     dest = ROOT / "_releases" / f"{args.tag}.md"
-    if dest.exists() and not args.force:
-        sys.exit(f"{dest.relative_to(ROOT)} already exists; pass --force to overwrite.")
     dest.parent.mkdir(exist_ok=True)
-    dest.write_text(doc, encoding="utf-8")
+    # "x" fails if the file appeared since we last looked, so the guard cannot be
+    # raced past; --force is the deliberate overwrite.
+    try:
+        with open(dest, "w" if args.force else "x", encoding="utf-8") as fh:
+            fh.write(doc)
+    except FileExistsError:
+        sys.exit(f"{dest.relative_to(ROOT)} already exists; pass --force to overwrite.")
     print(f"wrote {dest.relative_to(ROOT)}  ({len(content.splitlines())} lines)")
     print("Review it -- highlights often need light editing for a standalone page.")
 
