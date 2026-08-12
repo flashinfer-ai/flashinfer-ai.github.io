@@ -71,6 +71,7 @@ flashinfer_repo: https://github.com/flashinfer-ai/flashinfer
 
 exclude:
   - README.md
+  - CLAUDE.md
   - scripts/
   - Gemfile
   - Gemfile.lock
