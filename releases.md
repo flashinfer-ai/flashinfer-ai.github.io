@@ -9,6 +9,5 @@ body_class: releases-page
 description: Highlights from each FlashInfer release.
 ---
 
-Editorial highlights for users deciding whether a release matters to their
-models, hardware, or serving stack — not a complete changelog. GitHub's
-generated release notes remain the full inventory.
+Editorial highlights to inform users about important upgrades to their models,
+hardware, and serving stack.
