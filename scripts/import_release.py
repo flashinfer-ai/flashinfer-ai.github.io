@@ -44,6 +44,9 @@ PR_PLACEHOLDER = "\x00PR_LIST:{}\x00"
 # Release tags only: letters, digits, dots, dashes. No separators, no traversal.
 TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.\-]*$")
 CHANGELOG_HEADING = re.compile(r"^#+\s*(what'?s changed|new contributors)\s*$", re.IGNORECASE)
+# Release pages link back to this site. Importing that line would make the page
+# link to itself.
+SITE_BACKLINK = re.compile(r"flashinfer\.ai/releases")
 
 
 def fetch(tag):
@@ -51,6 +54,9 @@ def fetch(tag):
         ["gh", "release", "view", tag, "--repo", REPO, "--json", "body,publishedAt"],
         capture_output=True,
         text=True,
+        # Release notes are full of em dashes and warning signs. `text=True`
+        # alone decodes with the locale's encoding, which fails under LANG=C.
+        encoding="utf-8",
     )
     if out.returncode:
         sys.exit(f"gh failed for {tag}: {out.stderr.strip()}")
@@ -74,6 +80,7 @@ def fetch_pr_titles(numbers):
             ["gh", "api", "graphql", "-f", f"query={query}"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         if out.returncode:
             sys.exit(f"gh graphql failed: {out.stderr.strip()}")
@@ -133,6 +140,9 @@ def convert(body):
         if line.strip().startswith("**Full Changelog**"):
             break
         if HIGHLIGHTS_HEADING.match(line.strip()):
+            i += 1
+            continue
+        if SITE_BACKLINK.search(line):
             i += 1
             continue
 
@@ -201,6 +211,8 @@ def main():
     doc = f"---\ntag: {args.tag}\ndate: {date}\n---\n\n{content}\n"
 
     if args.stdout:
+        # The text is UTF-8 regardless of what the terminal's locale claims.
+        sys.stdout.reconfigure(encoding="utf-8")
         print(doc, end="")
         return
 
@@ -208,7 +220,7 @@ def main():
     if dest.exists() and not args.force:
         sys.exit(f"{dest.relative_to(ROOT)} already exists; pass --force to overwrite.")
     dest.parent.mkdir(exist_ok=True)
-    dest.write_text(doc)
+    dest.write_text(doc, encoding="utf-8")
     print(f"wrote {dest.relative_to(ROOT)}  ({len(content.splitlines())} lines)")
     print("Review it -- highlights often need light editing for a standalone page.")
 
