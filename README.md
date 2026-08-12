@@ -10,8 +10,10 @@ bundle install
 bundle exec jekyll serve   # http://localhost:4000
 ```
 
-Production uses GitHub Pages' default Jekyll build rather than this repo's
-Gemfile, so avoid Jekyll-4-only features. To build exactly what Pages builds:
+Production uses GitHub Pages' default Jekyll build, not this repo's Gemfile, so
+avoid Jekyll-4-only features. For a Pages-compatible build — the same image and
+Jekyll version the Pages builder uses, though the `latest` tag moves and Pages
+runs its own deployment:
 
 ```bash
 docker run --rm -v "$PWD":/src -w /src --entrypoint jekyll \

@@ -41,6 +41,8 @@ BOLD_HEADING = re.compile(r"^\*\*(?P<text>.+?)\*\*:?\s*$")
 HIGHLIGHTS_HEADING = re.compile(r"^#+\s*(v?[\d.]+\s+)?highlights\s*$", re.IGNORECASE)
 SHALLOW_HEADING = re.compile(r"^(#{1,2})\s+(?P<text>.+?)\s*$")
 PR_PLACEHOLDER = "\x00PR_LIST:{}\x00"
+# Release tags only: letters, digits, dots, dashes. No separators, no traversal.
+TAG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.\-]*$")
 CHANGELOG_HEADING = re.compile(r"^#+\s*(what'?s changed|new contributors)\s*$", re.IGNORECASE)
 
 
@@ -175,6 +177,12 @@ def main():
     ap.add_argument("--stdout", action="store_true", help="print instead of writing the file")
     ap.add_argument("--force", action="store_true", help="overwrite an existing entry")
     args = ap.parse_args()
+
+    # The tag becomes a filename, so keep it to what a release tag can contain.
+    # Otherwise a tag like `../README` writes outside `_releases/`, and `--force`
+    # would overwrite it.
+    if not TAG_RE.match(args.tag):
+        sys.exit(f"refusing tag {args.tag!r}: expected something like v0.6.17 or v0.6.16.post4")
 
     body, published = fetch(args.tag)
     content, pr_runs = convert(body)

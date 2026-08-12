@@ -61,7 +61,7 @@ markdown: kramdown
 # page. `output: false` because these are not standalone pages: `releases.md`
 # renders every entry into one continuous page with a sticky side nav.
 #
-# See README.md for how to add an entry (`scripts/import_release.sh` does it).
+# See README.md for how to add an entry (`scripts/import_release.py` does it).
 collections:
   releases:
     output: false
