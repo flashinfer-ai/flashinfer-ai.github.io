@@ -42,9 +42,10 @@ Publish a release's highlights after tagging:
 ```
 
 The script pulls the release body with `gh`, drops the auto-generated changelog,
-promotes the `**bold**` subsection headings to `###`, and rewrites bare PR
-references into linked chips. Review the result — prose written for a GitHub
-release sometimes needs light editing to stand alone — then commit.
+promotes the `**bold**` subsection headings to `###`, and turns bare PR
+references into one linked row each, with the PR title alongside. Review the
+result — prose written for a GitHub release sometimes needs light editing to
+stand alone — then commit.
 
 Entries sort by the `date` in their front matter, newest first, so only that
 field and `tag` are required:
@@ -57,11 +58,14 @@ date: 2026-08-11 05:09:14 +0000
 
 One-paragraph summary of the release; rendered as the lead.
 
-### A notable change
+### Kimi K3 MLA decode on Blackwell
 
-What changed and why it matters.
+Section titles state a capability. Lead with what users can now run, then add
+only enough mechanism to make the claim credible.
 
-<p class="pr-list"><a href="https://github.com/flashinfer-ai/flashinfer/pull/4137">#4137</a></p>
+<ul class="pr-list">
+<li><a href="https://github.com/flashinfer-ai/flashinfer/pull/4178">#4178</a> <span class="pr-title">feat(mla): support packed low-head and variable-Q decode</span></li>
+</ul>
 ```
 
 Releases whose GitHub notes are only an auto-generated changelog are left off
