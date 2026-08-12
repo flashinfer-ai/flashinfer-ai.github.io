@@ -58,7 +58,7 @@ markdown: kramdown
 #
 # Each file in `_releases/` holds the hand-written highlights for one release --
 # the same prose we prepend to the auto-generated changelog on the GitHub release
-# page. `output: false` because these are not standalone pages: `releases/index.md`
+# page. `output: false` because these are not standalone pages: `pages/releases.md`
 # renders every entry into one continuous page with a sticky side nav.
 #
 # See README.md for how to add an entry (`scripts/import_release.py` does it).
