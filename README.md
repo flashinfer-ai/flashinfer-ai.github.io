@@ -29,43 +29,16 @@ home page and in the RSS feed.
 
 ### Release highlights
 
-The [Releases page](https://flashinfer.ai/releases/) collects the hand-written
-highlights we prepend to the auto-generated changelog on each
-[GitHub release](https://github.com/flashinfer-ai/flashinfer/releases). One file
-per release in `_releases/`, all rendered into a single continuous page with a
-sticky version nav by `_layouts/releases.html`.
-
-Publish a release's highlights after tagging:
+The [Releases page](https://flashinfer.ai/releases/) renders one entry per
+release from `_releases/`. After a release is tagged:
 
 ```bash
 ./scripts/import_release.py v0.6.17   # writes _releases/v0.6.17.md
 ```
 
-The script pulls the release body with `gh`, drops the auto-generated changelog,
-promotes the `**bold**` subsection headings to `###`, and turns bare PR
-references into one linked row each, with the PR title alongside. Review the
-result — prose written for a GitHub release sometimes needs light editing to
-stand alone — then commit.
-
-Entries sort by the `date` in their front matter, newest first, so only that
-field and `tag` are required:
-
-```markdown
----
-tag: v0.6.17
-date: 2026-08-11 05:09:14 +0000
----
-
-One-paragraph summary of the release; rendered as the lead.
-
-### Section title stating a capability
-
-What users can now do, then enough detail to make the claim credible.
-
-<ul class="pr-list">
-<li><a href="https://github.com/flashinfer-ai/flashinfer/pull/1234">#1234</a> <span class="pr-title">PR title</span></li>
-</ul>
-```
+See `_releases/_README.md` for the entry format. What belongs in the highlights
+is an editorial question, decided before they are published on the GitHub
+release — not here.
 
 Releases whose GitHub notes are only an auto-generated changelog are left off
 the page — it exists for the editorial summary, not to mirror every tag.
