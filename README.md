@@ -38,7 +38,4 @@ release from `_releases/`. After a release is tagged:
 
 See `_releases/_README.md` for the entry format. What belongs in the highlights
 is an editorial question, decided before they are published on the GitHub
-release — not here.
-
-Releases whose GitHub notes are only an auto-generated changelog are left off
-the page — it exists for the editorial summary, not to mirror every tag.
+release — not here, which is also why not every tag has an entry.
