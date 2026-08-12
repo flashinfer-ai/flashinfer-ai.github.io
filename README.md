@@ -58,13 +58,12 @@ date: 2026-08-11 05:09:14 +0000
 
 One-paragraph summary of the release; rendered as the lead.
 
-### Kimi K3 MLA decode on Blackwell
+### Section title stating a capability
 
-Section titles state a capability. Lead with what users can now run, then add
-only enough mechanism to make the claim credible.
+What users can now do, then enough detail to make the claim credible.
 
 <ul class="pr-list">
-<li><a href="https://github.com/flashinfer-ai/flashinfer/pull/4178">#4178</a> <span class="pr-title">feat(mla): support packed low-head and variable-Q decode</span></li>
+<li><a href="https://github.com/flashinfer-ai/flashinfer/pull/1234">#1234</a> <span class="pr-title">PR title</span></li>
 </ul>
 ```
 
