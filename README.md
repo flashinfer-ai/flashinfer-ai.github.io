@@ -33,7 +33,7 @@ The [Releases page](https://flashinfer.ai/releases/) renders one entry per
 release from `_releases/`. After a release is tagged:
 
 ```bash
-./scripts/import_release.py v0.6.17   # writes _releases/v0.6.17.md
+./scripts/import_release.py <tag>   # writes _releases/<tag>.md
 ```
 
 See `_releases/_README.md` for the entry format. What belongs in the highlights
