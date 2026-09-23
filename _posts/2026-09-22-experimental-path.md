@@ -41,7 +41,7 @@ from flashinfer.api_logging import flashinfer_api
 def existing_op(x, **kwargs):
     return run_existing_op(x, **kwargs)
 
-## [NEW] Mark API as experimental 
+## [NEW] Mark API as experimental
 from flashinfer.api_logging import flashinfer_experimental_api
 
 @flashinfer_experimental_api
@@ -61,7 +61,7 @@ import torch
 
 # In the lightweight support module:
 
-@experimental_backend # [NEW] Mark backend as experimental 
+@experimental_backend # [NEW] Mark backend as experimental
 @supported_compute_capability([120, 121])
 def check_sm12x_cute(a, b, out=None, backend="auto"):
     return a.dtype == torch.bfloat16 and a.shape[-1] % 64 == 0

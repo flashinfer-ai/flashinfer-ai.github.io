@@ -21,35 +21,35 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 231.12 
-L 840.96 231.12 
-L 840.96 0 
-L 0 0 
+   <path d="M 0 231.12
+L 840.96 231.12
+L 840.96 0
+L 0 0
 z
 " style="fill: #ffffff"/>
   </g>
   <g id="axes_1">
    <g id="patch_2">
-    <path d="M 52.56 159.499636 
-L 205.463915 159.499636 
-L 205.463915 101.860364 
-L 52.56 101.860364 
+    <path d="M 52.56 159.499636
+L 205.463915 159.499636
+L 205.463915 101.860364
+L 52.56 101.860364
 z
 " clip-path="url(#pbf2836c984)" style="fill: #d97706; stroke: #ffffff; stroke-width: 2; stroke-linejoin: miter"/>
    </g>
    <g id="patch_3">
-    <path d="M 205.463915 159.499636 
-L 569.653238 159.499636 
-L 569.653238 101.860364 
-L 205.463915 101.860364 
+    <path d="M 205.463915 159.499636
+L 569.653238 159.499636
+L 569.653238 101.860364
+L 205.463915 101.860364
 z
 " clip-path="url(#pbf2836c984)" style="fill: #d1d5db; stroke: #ffffff; stroke-width: 2; stroke-linejoin: miter"/>
    </g>
    <g id="patch_4">
-    <path d="M 569.653238 159.499636 
-L 833.76 159.499636 
-L 833.76 101.860364 
-L 569.653238 101.860364 
+    <path d="M 569.653238 159.499636
+L 833.76 159.499636
+L 833.76 101.860364
+L 569.653238 101.860364
 z
 " clip-path="url(#pbf2836c984)" style="fill: #2563eb; stroke: #ffffff; stroke-width: 2; stroke-linejoin: miter"/>
    </g>

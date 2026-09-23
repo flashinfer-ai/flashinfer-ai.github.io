@@ -21,22 +21,22 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 324 
-L 840.96 324 
-L 840.96 0 
-L 0 0 
+   <path d="M 0 324
+L 840.96 324
+L 840.96 0
+L 0 0
 z
 " style="fill: #ffffff"/>
   </g>
   <g id="axes_1">
    <g id="line2d_1">
-    <path d="M 99.432 175.608 
-L 786.888 175.608 
+    <path d="M 99.432 175.608
+L 786.888 175.608
 " clip-path="url(#p900934a1a2)" style="fill: none; stroke: #d1d5db; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="line2d_2">
-    <path d="M 99.432 260.856 
-L 786.888 260.856 
+    <path d="M 99.432 260.856
+L 786.888 260.856
 " clip-path="url(#p900934a1a2)" style="fill: none; stroke: #d1d5db; stroke-width: 0.8; stroke-linecap: square"/>
    </g>
    <g id="text_1">
@@ -46,12 +46,12 @@ L 786.888 260.856
     <text style="font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4b5563" x="99.432" y="150.18375" transform="rotate(-0 99.432 150.18375)">GPU · FlashInfer/CUDA/backend versions · cache schema · non-default policy</text>
    </g>
    <g id="patch_2">
-    <path d="M 507.65382 138.312 
-Q 544.713669 138.312 579.761057 138.312 
+    <path d="M 507.65382 138.312
+Q 544.713669 138.312 579.761057 138.312
 " style="fill: none; stroke: #2563eb; stroke-width: 1.8; stroke-linecap: round"/>
-    <path d="M 574.561057 135.712 
-L 579.761057 138.312 
-L 574.561057 140.912 
+    <path d="M 574.561057 135.712
+L 579.761057 138.312
+L 574.561057 140.912
 " style="fill: none; stroke: #2563eb; stroke-width: 1.8; stroke-linecap: round"/>
    </g>
    <g id="text_3">
@@ -67,12 +67,12 @@ L 574.561057 140.912
     <text style="font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4b5563" x="99.432" y="235.43175" transform="rotate(-0 99.432 235.43175)">custom op · runner · shape bucket · runner-specific extras</text>
    </g>
    <g id="patch_3">
-    <path d="M 507.65382 223.56 
-Q 544.713669 223.56 579.761057 223.56 
+    <path d="M 507.65382 223.56
+Q 544.713669 223.56 579.761057 223.56
 " style="fill: none; stroke: #0f766e; stroke-width: 1.8; stroke-linecap: round"/>
-    <path d="M 574.561057 220.96 
-L 579.761057 223.56 
-L 574.561057 226.16 
+    <path d="M 574.561057 220.96
+L 579.761057 223.56
+L 574.561057 226.16
 " style="fill: none; stroke: #0f766e; stroke-width: 1.8; stroke-linecap: round"/>
    </g>
    <g id="text_7">
