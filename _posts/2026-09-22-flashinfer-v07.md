@@ -2,7 +2,7 @@
 layout: post
 title: "Accelerate LLM Inference with Open Kernels and Smarter Autotuning with FlashInfer v0.7"
 date: 2026-09-22 01:00:00 +0000
-author: "Alex Yang, Brian K. Ryu, Anerudhan Gopal, Yang Xu, Jingfan Sun, Albert Cheng, Vincent Tombari, Md Saidul Hoque Anik, Lee Nau, Xin Li, Po-Han Huang"
+author: "Alex Yang, Brian K. Ryu, Anerudhan Gopal, Kaustubh Rao, Yang Xu, Jingfan Sun, Albert Cheng, Vincent Tombari, Md Saidul Hoque Anik, Lee Nau, Xin Li, Po-Han Huang"
 body_class: technical-blog
 toc: true
 excerpt: "Open kernels, an experimental contribution path, unified expert-parallel MoE, and serving-aware autotuning in FlashInfer v0.7."
