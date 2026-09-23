@@ -39,9 +39,10 @@ Things that are load-bearing and easy to undo by accident:
   entry.
 - **`permalink: /releases/` sets the URL.** `pages/` means nothing to Jekyll, so
   without that line the page moves to `/pages/releases.html`.
-- **The header nav is generated.** `_includes/header.html` iterates `site.pages`
-  and renders any page with a title, using `nav_title` when set. A page moved
-  into a collection or a `_`-prefixed directory disappears from the nav.
+- **The header nav order is explicit.** `header_pages` in `_config.yml` lists
+  Releases followed by Posts. `_includes/header.html` renders these pages,
+  using `nav_title` when set, before the external links. `/posts/` uses the
+  same `home` layout and post list as the homepage.
 - **`body_class` in front matter** puts the wider layout and typography on the
   releases page only, so the blog and home page keep the default width.
 - **`_sass/releases.scss` is additive.** It adds no rules to existing selectors;
@@ -51,3 +52,11 @@ Things that are load-bearing and easy to undo by accident:
 
 Build with the Docker command above and diff `_site` against a build of `main`.
 Existing pages should be unchanged apart from the feed's build timestamp.
+
+## Technical articles
+
+The v0.7 posts opt into `body_class: technical-blog` and `toc: true`.
+`_sass/technical-blog.scss` carries the serif typography from the Autotuner
+draft; `assets/js/blog-toc.js` builds section links from article h2 headings,
+tracks the current section, and makes wide tables horizontally scrollable.
+These styles are scoped so older posts retain their existing presentation.

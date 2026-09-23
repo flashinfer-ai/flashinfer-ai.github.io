@@ -329,3 +329,14 @@ $releases-gutter: $spacing-unit * 1.75;
     }
   }
 }
+
+// Opt-in wrapping for upgrade tables and paragraphs containing long API names.
+// Fixed columns keep these tables within the release's reading width.
+.release-upgrade-table {
+  table-layout: fixed;
+  overflow-wrap: anywhere;
+}
+
+.release-wrap {
+  overflow-wrap: anywhere;
+}
