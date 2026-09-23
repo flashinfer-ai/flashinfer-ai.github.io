@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="840.96pt" height="324pt" viewBox="0 0 840.96 324" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-04</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>FlashInfer validation figure builder</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 324
+L 840.96 324
+L 840.96 0
+L 0 0
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 208.8 146.304
+L 740.016 146.304
+" clip-path="url(#p900934a1a2)" style="fill: none; stroke: #d1d5db; stroke-width: 2; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 263.484 231.552
+L 708.768 231.552
+" clip-path="url(#p900934a1a2)" style="fill: none; stroke: #d1d5db; stroke-width: 2; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 99.432 284.832
+L 786.888 284.832
+" clip-path="url(#p900934a1a2)" style="fill: none; stroke: #d1d5db; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 12.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #111827" x="99.432" y="151.0415" transform="rotate(-0 99.432 151.0415)">Warmup process</text>
+   </g>
+   <g id="patch_2">
+    <path d="M 742.01525 146.304
+Q 753.685846 146.304 763.455785 146.304
+" style="fill: none; stroke: #4b5563; stroke-width: 1.7; stroke-linecap: round"/>
+    <path d="M 758.255785 143.704
+L 763.455785 146.304
+L 758.255785 148.904
+" style="fill: none; stroke: #4b5563; stroke-width: 1.7; stroke-linecap: round"/>
+   </g>
+   <g id="PathCollection_1">
+    <defs>
+     <path id="mc5b4728d9b" d="M 0 5.244044
+C 1.390737 5.244044 2.7247 4.691499 3.708099 3.708099
+C 4.691499 2.7247 5.244044 1.390737 5.244044 0
+C 5.244044 -1.390737 4.691499 -2.7247 3.708099 -3.708099
+C 2.7247 -4.691499 1.390737 -5.244044 0 -5.244044
+C -1.390737 -5.244044 -2.7247 -4.691499 -3.708099 -3.708099
+C -4.691499 -2.7247 -5.244044 -1.390737 -5.244044 0
+C -5.244044 1.390737 -4.691499 2.7247 -3.708099 3.708099
+C -2.7247 4.691499 -1.390737 5.244044 0 5.244044
+z
+" style="stroke: #ffffff; stroke-width: 1.2"/>
+    </defs>
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#mc5b4728d9b" x="208.8" y="146.304" style="fill: #d97706; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_2">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="208.8" y="121.3815" transform="rotate(-0 208.8 121.3815)">Attach store</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="208.8" y="175.0424" transform="rotate(-0 208.8 175.0424)">managed store</text>
+   </g>
+   <g id="PathCollection_2">
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#mc5b4728d9b" x="388.476" y="146.304" style="fill: #d97706; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="388.476" y="121.3815" transform="rotate(-0 388.476 121.3815)">Profile misses</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="388.476" y="175.0424" transform="rotate(-0 388.476 175.0424)">selected boundary</text>
+   </g>
+   <g id="PathCollection_3">
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#mc5b4728d9b" x="568.152" y="146.304" style="fill: #d97706; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="568.152" y="121.3815" transform="rotate(-0 568.152 121.3815)">Atomic publish</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="568.152" y="175.0424" transform="rotate(-0 568.152 175.0424)">per-operation entry</text>
+   </g>
+   <g id="PathCollection_4">
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#mc5b4728d9b" x="740.016" y="146.304" style="fill: #d97706; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="740.016" y="121.3815" transform="rotate(-0 740.016 121.3815)">Serve from memory</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="740.016" y="175.0424" transform="rotate(-0 740.016 175.0424)">profiling stopped</text>
+   </g>
+   <g id="text_10">
+    <text style="font-weight: 700; font-size: 12.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #111827" x="99.432" y="236.2895" transform="rotate(-0 99.432 236.2895)">Fresh process</text>
+   </g>
+   <g id="patch_3">
+    <path d="M 710.76725 231.552
+Q 722.437846 231.552 732.207785 231.552
+" style="fill: none; stroke: #4b5563; stroke-width: 1.7; stroke-linecap: round"/>
+    <path d="M 727.007785 228.952
+L 732.207785 231.552
+L 727.007785 234.152
+" style="fill: none; stroke: #4b5563; stroke-width: 1.7; stroke-linecap: round"/>
+   </g>
+   <g id="PathCollection_5">
+    <defs>
+     <path id="ma66a05c9ea" d="M 0 5.244044
+C 1.390737 5.244044 2.7247 4.691499 3.708099 3.708099
+C 4.691499 2.7247 5.244044 1.390737 5.244044 0
+C 5.244044 -1.390737 4.691499 -2.7247 3.708099 -3.708099
+C 2.7247 -4.691499 1.390737 -5.244044 0 -5.244044
+C -1.390737 -5.244044 -2.7247 -4.691499 -3.708099 -3.708099
+C -4.691499 -2.7247 -5.244044 -1.390737 -5.244044 0
+C -5.244044 1.390737 -4.691499 2.7247 -3.708099 3.708099
+C -2.7247 4.691499 -1.390737 5.244044 0 5.244044
+z
+" style="stroke: #ffffff; stroke-width: 1.2"/>
+    </defs>
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#ma66a05c9ea" x="263.484" y="231.552" style="fill: #0f766e; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_11">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="263.484" y="206.6295" transform="rotate(-0 263.484 206.6295)">Attach same store</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="263.484" y="260.2904" transform="rotate(-0 263.484 260.2904)">same environment</text>
+   </g>
+   <g id="PathCollection_6">
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#ma66a05c9ea" x="497.844" y="231.552" style="fill: #0f766e; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_13">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="497.844" y="206.6295" transform="rotate(-0 497.844 206.6295)">Hydrate once</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="497.844" y="260.2904" transform="rotate(-0 497.844 260.2904)">first eligible lookup</text>
+   </g>
+   <g id="PathCollection_7">
+    <g clip-path="url(#p900934a1a2)">
+     <use xlink:href="#ma66a05c9ea" x="708.768" y="231.552" style="fill: #0f766e; stroke: #ffffff; stroke-width: 1.2"/>
+    </g>
+   </g>
+   <g id="text_15">
+    <text style="font-weight: 700; font-size: 10.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #111827" x="708.768" y="206.6295" transform="rotate(-0 708.768 206.6295)">Serve from memory</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 9.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle; fill: #4b5563" x="708.768" y="260.2904" transform="rotate(-0 708.768 260.2904)">steady state</text>
+   </g>
+   <g id="text_17">
+    <text style="font-weight: 700; font-size: 9.5px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #059669" x="99.432" y="305.7485" transform="rotate(-0 99.432 305.7485)">MEASURED STEADY STATE</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', 'Computer Modern Typewriter', 'Andale Mono', 'Nimbus Mono L', 'Courier New', 'Courier', 'Fixed', 'Terminal', monospace; text-anchor: start; fill: #111827" x="255.672" y="305.03507" transform="rotate(-0 255.672 305.03507)">0 filesystem operations · 0 JSON calls · 600 lookups</text>
+   </g>
+  </g>
+  <g id="text_19">
+   <text style="font-size: 13.2px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #111827" x="7.2" y="19.7664" transform="rotate(-0 7.2 19.7664)">Tune once, then reuse from memory</text>
+  </g>
+  <g id="text_20">
+   <text style="font-size: 11px; font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start; fill: #4b5563" x="7.2" y="37.472" transform="rotate(-0 7.2 37.472)">The first process publishes per-operation winners; a fresh process hydrates them once.</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p900934a1a2">
+   <rect x="52.56" y="50.4" width="781.2" height="266.4"/>
+  </clipPath>
+ </defs>
+</svg>

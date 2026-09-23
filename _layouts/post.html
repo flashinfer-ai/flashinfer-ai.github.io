@@ -1,6 +1,10 @@
 ---
 layout: default
 ---
+{% if page.toc %}
+<div class="blog-layout">
+  <nav class="blog-toc" aria-label="On this page" hidden></nav>
+{% endif %}
 <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
@@ -19,7 +23,7 @@ layout: default
     {{ content }}
   </div>
 
-  <!-- Your blog post content here -->
+  {% unless site.preview %}
   <div id="comments">
     <h2>Comments</h2>
     <script src="https://utteranc.es/client.js"
@@ -32,5 +36,11 @@ layout: default
   </div>
 
 
+  {% endunless %}
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 </article>
+
+{% if page.toc %}
+</div>
+<script src="{{ "/assets/js/blog-toc.js" | relative_url }}" defer></script>
+{% endif %}

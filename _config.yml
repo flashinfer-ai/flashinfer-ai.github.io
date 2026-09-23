@@ -26,6 +26,10 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "https://flashinfer.ai" # the base hostname & protocol for your site, e.g. http://example.com
 github_username: flashinfer-ai
 
+header_pages:
+  - pages/releases.md
+  - pages/posts.md
+
 # Build settings
 theme: minima
 plugins:

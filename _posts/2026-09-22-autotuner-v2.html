@@ -1,0 +1,802 @@
+---
+layout: "post"
+title: "FlashInfer Autotuner v2: Tune the Way You Serve"
+date: "2026-09-22 00:00:00 +0000"
+author: "Yang Xu, Albert Cheng, Vincent Tombari, Alex Yang, Brian K. Ryu, Jingfan Sun, Lee Nau, Xin Li, and Po-Han Huang"
+body_class: "technical-blog"
+toc: true
+excerpt: "Serving-aware kernel measurement and persistent tuning results in FlashInfer Autotuner v2."
+description: "Deployment-matched measurement, persistent kernel choices, and distributed rank agreement in FlashInfer Autotuner v2."
+---
+
+{% raw %}
+<p class="blog-related">Part of <a href="/2026/09/22/flashinfer-v07.html">FlashInfer 0.7</a>. See the <a href="/releases/#v0-7-0">release highlights</a> for upgrade notes.</p>
+
+
+
+<p><em>How FlashInfer rebuilt GPU kernel autotuning for better
+production LLM serving at scale.</em></p>
+
+<h2 id="overview">Overview</h2>
+<p>FlashInfer v0.7 introduces Autotuner v2, a redesign of how FlashInfer
+measures, persists, and reuses GPU-kernel choices. The same operation
+can often run through several backends, algorithms, or configurations,
+which FlashInfer calls <em>tactics</em>. Because the fastest tactic
+changes with shape and GPU, the autotuner measures candidates during
+warmup and reuses the winner during execution.</p>
+<p>The legacy v1 design treated GPU device time as the ranking
+objective. That proxy works when omitted host overhead is negligible or
+nearly equal across tactics, but execution mode can break the
+assumption. Eager execution repeats framework and backend launch work on
+every call; under CUDA Graph execution, the launch sequence is captured
+once, so tuning ranks replay latency. The legacy cache did not record
+that distinction as an explicit policy.</p>
+<p>For example, on NVIDIA Blackwell (SM100), a measured
+<code>bmm_fp8</code> cuDNN candidate at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>=</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">M=8</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mi>K</mi><mo>=</mo><mn>8192</mn></mrow><annotation encoding="application/x-tex">N=K=8192</annotation></semantics></math>
+took about 8 microseconds (µs) when timing excluded host work, but about
+330 µs when called repeatedly in eager mode. Because the recurring host
+cost varied by tactic, the device-time winner could lose the full eager
+call. The kernel did not change; the measurement boundary did.</p>
+<p>Reuse adds a second system problem. A winner shared across calls,
+process restarts, and distributed ranks can be misapplied if its key is
+incomplete, become unusable as its runtime changes, or diverge across
+ranks. Autotuner v2 therefore treats the winner as a deployment
+artifact. We explain the redesign and its evidence in five parts:</p>
+<ol type="1">
+<li>
+<strong>The best tactic depends on how you run it.</strong> Eager
+execution includes recurring host cost; CUDA Graph execution ranks
+captured replay.</li>
+<li>
+<strong>A winner is valid only in context.</strong> The environment,
+operation, and measurement policy determine where a saved result can be
+reused.</li>
+<li>
+<strong>Cache correctness across calls, processes, and
+ranks.</strong> Atomic publication, optional tactic validation,
+in-memory promotion, and explicit rank convergence keep reused choices
+valid and consistent.</li>
+<li>
+<strong>Benchmark methodology: beyond single-kernel timing.</strong>
+Independent oracle, selection, persistence, and multi-rank experiments
+separate what is measured from how each claim is tested.</li>
+<li>
+<strong>What the benchmarks showed.</strong> The results quantify
+selection quality, cache cost and correctness, and rank agreement, then
+show where the measurements changed the implementation.</li>
+</ol>
+<p>Across 276 matched eager workloads, median regret, the latency
+penalty relative to the measured best tactic, fell from <strong>1.390%
+with v1 event timing to 0.418% with v2 eager timing</strong>. The
+matrix-wide mean fell from <strong>96.08% to 0.958%</strong>, reflecting
+a high-regret tail in v1: the number of workloads above 100% regret fell
+from <strong>59 to zero</strong>. Across 281 CUDA Graph workloads,
+median regret moved from 0.0565% to 0.00646%, while mean regret moved
+more modestly from 0.346% to 0.215%. In four B200 and GB300
+configurations, steady-state v2 lookup latency stayed <strong>within
+0.72% of v1</strong>, with zero filesystem operations and zero JSON
+calls over 600 lookups. We evaluated 14 tuned operation surfaces across
+NVIDIA H100, B200, GB200, and GB300 GPUs; Figure 8 shows the measured
+coverage.</p>
+<h2 id="the-best-tactic-depends-on-how-you-run-it">1. The best tactic
+depends on how you run it</h2>
+<p>The SM100 <code>bmm_fp8</code> example makes the central requirement
+concrete: a useful autotuner must identify the fastest tactic under the
+execution mode that will actually run. Device time is an adequate proxy
+only when omitted host work is negligible or nearly equal across
+tactics.</p>
+<p>Figure 1 summarizes the resulting design choice: eager and CUDA Graph
+execution expose different costs, so they can produce different winners
+for the same operation and environment.</p>
+<figure>
+<img role="img" aria-label="An animated schematic follows two tactics through device-only timing, full eager-call timing, and CUDA Graph replay. Candidate-dependent host cost reverses the eager ranking, while graph mode independently ranks captured replay." src="/assets/imgs/autotuner-v2/figure-1.gif" alt="An animated schematic follows two tactics through device-only timing, full eager-call timing, and CUDA Graph replay. Candidate-dependent host cost reverses the eager ranking, while graph mode independently ranks captured replay." loading="lazy">
+
+</figure>
+<p><em>Figure 1. The measurement boundary can change which tactic
+wins.</em></p>
+<p>Autotuner v2 therefore exposes two explicit measurement modes. Eager
+mode ranks the recurring call, including host and device work. CUDA
+Graph mode captures the operation once and ranks replay latency.</p>
+<p>For two tactics
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>,
+let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>d</mi><mi>a</mi></msub><annotation encoding="application/x-tex">d_a</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>d</mi><mi>b</mi></msub><annotation encoding="application/x-tex">d_b</annotation></semantics></math>
+be their device times, and let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>h</mi><mi>a</mi></msub><annotation encoding="application/x-tex">h_a</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>h</mi><mi>b</mi></msub><annotation encoding="application/x-tex">h_b</annotation></semantics></math>
+be the recurring host costs paid by eager execution. Device-only timing
+can prefer
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>a</mi><annotation encoding="application/x-tex">a</annotation></semantics></math>,
+while the full eager call prefers
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>b</mi><annotation encoding="application/x-tex">b</annotation></semantics></math>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>a</mi></msub><mo>&lt;</mo><msub><mi>d</mi><mi>b</mi></msub><mspace width="2.0em"></mspace><mtext mathvariant="normal">but</mtext><mspace width="2.0em"></mspace><msub><mi>d</mi><mi>a</mi></msub><mo>+</mo><msub><mi>h</mi><mi>a</mi></msub><mo>&gt;</mo><msub><mi>d</mi><mi>b</mi></msub><mo>+</mo><msub><mi>h</mi><mi>b</mi></msub><mi>.</mi></mrow><annotation encoding="application/x-tex">
+d_a&lt;d_b
+\qquad\text{but}\qquad
+d_a+h_a&gt;d_b+h_b.
+</annotation></semantics></math></p>
+<p>The left inequality is the ordering seen by the legacy timer; the
+right is the ordering of the full eager execution path. More device-only
+samples can reduce noise in the measured device times, but they cannot
+recover omitted, candidate-dependent host cost. That is the ranking
+reversal seen in the <code>bmm_fp8</code> example.</p>
+<p>We designed <code>MeasurementPolicy</code> to carry this execution
+choice into tuning. There is no universally correct measurement
+boundary, only the one the deployment will actually run.</p>
+<p>To avoid silently changing existing integrations, the default remains
+legacy-compatible. When a caller explicitly selects eager or CUDA Graph
+measurement, v2 records that non-default policy in the persistent
+environment identity, preventing a result measured for one execution
+mode from being reused as if it belonged to the other.</p>
+<h2 id="a-winner-is-valid-only-in-context">2. A winner is valid only in
+context</h2>
+<p>Measuring the right execution path answers how to choose a winner.
+Persistence introduces the next question: when can a saved answer be
+reused by later calls or a fresh process? The selected tactic depends on
+the operation, environment, and measurement policy, so v2 must preserve
+all three as the result’s context.</p>
+<p>In v1, frameworks and other callers supplied much of that machinery
+themselves: the filename, compatibility fields, invalidation rules, and
+loading or broadcast of a monolithic JSON file. Different integrations
+naturally encoded different reuse policies. Autotuner v2 brings this
+artifact boundary into FlashInfer so the library that creates a tactic
+also defines when it can be reused.</p>
+<p>Each result receives two levels of identity. The <strong>environment
+identity</strong> asks, “Can this runtime reuse the result?” It covers
+the cache schema, GPU, FlashInfer and CUDA versions, relevant backend
+and compiler versions, and any non-default measurement policy. The
+<strong>operation identity</strong> asks, “Is this the same tuning
+problem?” It combines the custom operation, runner class, resolved shape
+bucket, and runner-specific extras such as layout, activation,
+quantization, or expert structure.</p>
+<p>The split prevents two different kinds of aliasing. Across
+environments, a result measured with an explicit eager policy on B200
+does not share a namespace with a CUDA Graph result or one from another
+GPU, even when they use the same operation and shape. Within one
+compatible environment, runner-specific extras keep apart calls that a
+shape bucket alone would merge. In the GB200 key-ablation test,
+otherwise matched CUTLASS MoE calls with <code>top_k=8</code> and
+<code>top_k=4</code> mapped to different operation keys through
+<code>extras</code>. Without those distinctions, a well-formed file
+could still return a winner for a different call.</p>
+<p>Figure 2 shows how runtime-wide fields choose the environment
+directory while operation-specific fields choose one entry inside
+it.</p>
+<figure>
+<img role="img" aria-label="Runtime-wide fields map to an environment directory, while operation-specific fields map to one winner entry inside that directory." src="/assets/imgs/autotuner-v2/figure-2.svg" alt="Runtime-wide fields map to an environment directory, while operation-specific fields map to one winner entry inside that directory." loading="lazy">
+
+</figure>
+<p><em>Figure 2. Compatibility selects the directory; the operation
+selects the entry.</em></p>
+<p>The on-disk layout follows the same split. A runtime change moves
+lookup to another directory; an operation change selects another entry
+without invalidating unrelated operations.</p>
+<p>Identity only routes a call to the intended file. Correct reuse also
+requires a complete entry, a tactic that remains usable for the current
+call, and a consistent choice across distributed ranks. The next section
+explains how v2 enforces those conditions.</p>
+<h2 id="cache-correctness-across-calls-processes-and-ranks">3. Cache
+correctness across calls, processes, and ranks</h2>
+<p>Finding the intended cache entry is not enough to make reuse correct.
+A hit skips measurement, so the stored entry must be complete, its
+tactic must still be usable for the current call, and participating
+ranks must enter execution with compatible choices. Autotuner v2 handles
+those requirements at three boundaries: publication, acceptance, and
+rank convergence.</p>
+<p><strong>Publish a complete winner.</strong> During warmup, the tuning
+context attaches a managed store and profiles only misses. The normal
+untuned path participates as a candidate, so the published winner does
+not lose to the default under the same probe and measurement. v2 writes
+a complete per-operation entry to a temporary file in its destination
+directory, then installs it with an atomic rename. Concurrent processes
+may duplicate tuning work, but readers cannot see a half-written file,
+and no process needs to merge a monolithic cache at exit.</p>
+<p>Leaving the tuning context stops profiling but keeps the store
+attached. Serving can read the winner from process memory. A fresh
+process preloads eligible winners when it attaches the same store, then
+promotes each one into the hot lookup cache on first use. Steady-state
+calls neither reopen the entry nor reparse its JSON. Figure 3 follows
+this lifecycle from warmup through in-memory serving and fresh-process
+hydration.</p>
+<figure>
+<img role="img" aria-label="A lifecycle timeline shows tuning-context entry, profiling of misses, atomic publication of per-operation entries, context exit, steady-state in-memory reuse, and one-time hydration in a fresh process." src="/assets/imgs/autotuner-v2/figure-3.svg" alt="A lifecycle timeline shows tuning-context entry, profiling of misses, atomic publication of per-operation entries, context exit, steady-state in-memory reuse, and one-time hydration in a fresh process." loading="lazy">
+
+</figure>
+<p><em>Figure 3. Tune during warmup; serve from the attached
+result.</em></p>
+<p><strong>Accept only a usable hit.</strong> Reaching the intended
+entry is not enough. Even a syntactically valid tactic can become
+unusable if a backend’s available plans change with library version,
+shape, or device. Invalid JSON, a mismatched embedded key, or an entry
+stored under the wrong environment must also fail closed. Autotuner v2
+turns those cases into misses and lets a runner validate a loaded tactic
+against current inputs before reuse.</p>
+<p>Focusing on the v2-managed path and omitting legacy and bundled cache
+sources, the decision flow can be summarized in Python-like
+pseudocode:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python">namespace = environment_id(runtime, measurement_policy)
+key       = operation_id(op, runner, profile, extras)
+
+winner = memory.get(namespace, key)
+if winner is not None and validate_or_trust(winner, inputs):
+    return winner
+
+winner = persistent_store.get(namespace, key)
+if winner is not None and validate_or_trust(winner, inputs):
+    memory.put(namespace, key, winner)
+    return winner
+
+if not tuning_enabled:
+    return default_tactic
+
+candidates = [default_tactic, *valid_tactics]
+winner = measure_and_rank(candidates, measurement_policy)
+persistent_store.atomic_publish(namespace, key, winner)
+memory.put(namespace, key, winner)
+return winner</code></pre></div>
+<p>The order is deliberate: process memory, persistent store, then
+tuning. A validation hook can turn a stale hit into a miss. If both
+levels miss and tuning is disabled, FlashInfer returns the default.
+Otherwise it measures the candidates, publishes the winner atomically,
+and promotes it into memory.</p>
+<p>Autotuner v2 therefore asks runner implementations to follow three
+rules:</p>
+<ul>
+<li>A tactic should be self-describing, or index a shape-independent
+static table.</li>
+<li>Non-shape configuration that affects validity or ranking belongs in
+<code>get_cache_key_extras()</code>.</li>
+<li>A runner can implement <code>validate_tactic(inputs, tactic)</code>
+so an invalid in-memory or on-disk hit becomes a miss.</li>
+</ul>
+<p>In the pseudocode, <code>validate_or_trust</code> is runner-defined.
+When a runner supplies validation, a false result or an exception
+rejects the hit; otherwise v2 preserves the existing trust model.</p>
+<p><strong>Converge before distributed execution.</strong> Timing noise
+can make ranks publish or retain different local winners. For ranks that
+share a store, <code>autotune_v2_reload()</code> lets a framework place
+a barrier after concurrent tuning, clear rank-local winners, and reload
+the final shared entries before execution.</p>
+<p>The three boundaries use complementary protections:</p>
+<div class="blog-table-scroll" tabindex="0" role="region" aria-label="Benchmark or design table; scroll horizontally for all columns"><table>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Autotuner v2 mechanism</th>
+<th>What it establishes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Publication</td>
+<td>Include the untuned default in the candidate set; publish each
+complete entry with an atomic rename</td>
+<td>The saved winner did not lose to the default under the same tuning
+probe, and readers cannot observe a partial file</td>
+</tr>
+<tr>
+<td>Acceptance</td>
+<td>Environment and operation identity; optional
+<code>validate_tactic(...)</code> runner hook</td>
+<td>A mismatched or rejected entry becomes a cache miss</td>
+</tr>
+<tr>
+<td>Rank convergence</td>
+<td>Process-group measurement reduction, or a framework barrier followed
+by <code>autotune_v2_reload()</code>
+</td>
+<td>Participating ranks enter execution with the same tactic</td>
+</tr>
+</tbody>
+</table></div>
+<p><em>Table 1. Publication, acceptance, and rank convergence protect
+different parts of reuse.</em></p>
+<h2 id="benchmark-methodology-beyond-single-kernel-timing">4. Benchmark
+methodology: beyond single-kernel timing</h2>
+<p>Kernel timing alone cannot validate an autotuning system that
+measures, persists, reloads, and coordinates its decisions. We therefore
+organized the evaluation around four questions:</p>
+<ul>
+<li>
+<strong>Selection quality:</strong> does each policy choose a tactic
+close to the best candidate under the same execution path?</li>
+<li>
+<strong>Persistence cost:</strong> does saving and loading winners
+add work to steady-state lookup?</li>
+<li>
+<strong>Cache correctness:</strong> does reuse behave as intended
+across restarts, concurrent writers, key changes, and corrupted
+entries?</li>
+<li>
+<strong>Rank agreement:</strong> do the protected distributed paths
+make every rank use the same tactic?</li>
+</ul>
+<h3 id="measuring-selection-quality">Measuring selection quality</h3>
+<p>Top-1 winner accuracy hides the cost of a mistake. If the measured
+winner takes 10.0 µs and a policy chooses a 10.1 µs tactic, accuracy
+marks the choice wrong even though it is only 1% slower than the best
+available candidate. Choosing a 100 µs tactic receives the same wrong
+label, even though it is ten times slower. Regret distinguishes the
+near-tie from the expensive miss:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">regret</mi><mo>⁡</mo></mrow><mo>=</mo><mfrac><mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">h</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">n</mi></mrow></msub><mo>−</mo><msub><mi>t</mi><mrow><mi mathvariant="normal">b</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></msub></mrow><msub><mi>t</mi><mrow><mi mathvariant="normal">b</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></msub></mfrac><mi>.</mi></mrow><annotation encoding="application/x-tex">
+\operatorname{regret}
+=\frac{t_{\mathrm{chosen}}-t_{\mathrm{best}}}{t_{\mathrm{best}}}.
+</annotation></semantics></math></p>
+<p>To avoid grading a policy with the same samples it used to select a
+winner, the experiment followed three independent stages:</p>
+<ol type="1">
+<li>
+<strong>Build the oracle.</strong> For each workload and execution
+boundary, we measured every tactic in the runner-provided candidate pool
+in interleaved rounds. The resulting fixed table supplies
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>t</mi><mrow><mi mathvariant="normal">b</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">t</mi></mrow></msub><annotation encoding="application/x-tex">t_{\mathrm{best}}</annotation></semantics></math>
+and the scored latency of every candidate.</li>
+<li>
+<strong>Run selection independently.</strong> Using fresh timing
+samples, we ran v1 and v2 three times each on the same workload. Each
+version followed its implemented candidate rules: v1 used legacy event
+timing, while v2 used the policy being tested and included its
+default-path candidate.</li>
+<li>
+<strong>Score the choice.</strong> Only after selection did we take
+the returned tactic ID and look up its latency in the oracle table to
+compute regret.</li>
+</ol>
+<p>For each workload, we average regret across the three selection runs. The reported median, mean, and P90 summarize these workload averages.</p>
+<p>The fixed oracle measures the same eager or CUDA Graph execution
+boundary used for scoring; each selection run returns only a tactic ID,
+which we look up afterward. A regret of 0% means it found the measured
+winner, while 5% means its choice was 1.05× as slow. The score applies
+only to the runner-provided candidate pool, and only clock-stable runs
+enter the aggregates. For the high-regret eager tail, we also report
+absolute latency because a percentage alone hides the scale of the
+call.</p>
+<h3 id="measuring-persistence-and-cache-correctness">Measuring
+persistence and cache correctness</h3>
+<p>We treated attachment as warmup setup because it reads persistent
+files and therefore depends on the backing storage. We then measured two
+lookup phases: resolving and hydrating the first lookup, and repeating
+an already hydrated lookup. The steady-state benchmark measured the
+host-side <code>AutoTuner.choose_one()</code> call without launching a
+GPU kernel, while an audit counted filesystem and JSON activity on that
+path.</p>
+<p>Correctness tests then exercised the same lifecycle under failure:
+reuse by a fresh process, environment and policy isolation, corrupted or
+misplaced entries, one-field-at-a-time key changes, concurrent
+publication, and reload after unpublished local choices. This tests
+whether a fast hit is also the intended hit.</p>
+<h3 id="measuring-rank-agreement">Measuring rank agreement</h3>
+<p>On four GB200 ranks under deliberately noisy timing, we compared an
+unprotected control with two supported convergence paths: reducing
+candidate measurements across ranks, and tuning independently before a
+framework barrier and <code>autotune_v2_reload()</code>. For each arm,
+we recorded whether any observed key mapped to different tactics across
+ranks.</p>
+<p>The next section reports the evidence in the same order as the four
+questions above: selection quality, persistence cost, cache correctness,
+and rank agreement.</p>
+<h2 id="what-the-benchmarks-showed">5. What the benchmarks showed</h2>
+<p>Using that methodology, we first compare selection quality under
+eager and CUDA Graph execution, then evaluate persistence cost, cache
+correctness, and rank agreement. We close with three cases where the
+measurements led us to change the implementation.</p>
+<div class="blog-table-scroll" tabindex="0" role="region" aria-label="Benchmark or design table; scroll horizontally for all columns"><table>
+<colgroup>
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr>
+<th>Execution policy</th>
+<th style="text-align: right;">Matched workloads</th>
+<th style="text-align: right;">Median regret, v1 → v2</th>
+<th style="text-align: right;">Mean regret, v1 → v2</th>
+<th style="text-align: right;">P90 regret, v1 → v2</th>
+<th style="text-align: right;">High-regret tail, v1 → v2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Eager</td>
+<td style="text-align: right;">276</td>
+<td style="text-align: right;">1.390% → 0.418%</td>
+<td style="text-align: right;">96.08% → 0.958%</td>
+<td style="text-align: right;">303.8% → 2.66%</td>
+<td style="text-align: right;">Above 100%: 59 → 0</td>
+</tr>
+<tr>
+<td>CUDA Graph</td>
+<td style="text-align: right;">281</td>
+<td style="text-align: right;">0.0565% → 0.00646%</td>
+<td style="text-align: right;">0.346% → 0.215%</td>
+<td style="text-align: right;">0.946% → 0.683%</td>
+<td style="text-align: right;">Above 1%: 27 → 10</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="eager-execution-correcting-the-measurement-boundary">Eager
+execution: correcting the measurement boundary</h3>
+<p>The largest change appears where the legacy measurement objective
+differs most from eager execution. Across 276 matched workloads, median
+regret fell from 1.390% with v1 event timing to 0.418% with v2, while
+the matrix-wide mean fell from 96.08% to 0.958%. The 90th percentile
+fell from 303.8% to 2.66%, and the maximum workload-level mean from
+1750.7% to 5.14%. The gap between the median and mean reflects v1’s long
+tail: 59 v1 workloads exceeded 100% regret, while none of the v2
+workloads did. Figure 4 compares the two regret distributions. Each
+curve sorts the same 276-workload population independently, so its
+x-axis represents workload percentile rather than a workload-to-workload
+pairing.</p>
+<figure>
+<img role="img" aria-label="Two independently sorted workload-quantile curves compare v1 event-timing regret with v2 eager regret on a symmetric logarithmic scale. The v1 distribution develops a long tail above 100 percent, while the v2 distribution remains below 5.14 percent." src="/assets/imgs/autotuner-v2/figure-4.svg" alt="Two independently sorted workload-quantile curves compare v1 event-timing regret with v2 eager regret on a symmetric logarithmic scale. The v1 distribution develops a long tail above 100 percent, while the v2 distribution remains below 5.14 percent." loading="lazy">
+
+</figure>
+<p><em>Figure 4. In this eager matrix, deployment-matched timing removes
+v1’s high-regret tail.</em></p>
+<p>The matrix fixes
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mi>K</mi><mo>=</mo><mn>8192</mn></mrow><annotation encoding="application/x-tex">N=K=8192</annotation></semantics></math>
+and varies
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>,
+token count, or batch size by operation. The 59 v1 workloads above 100%
+regret span <code>bmm_fp8</code>, <code>mm_bf16</code>,
+<code>mm_fp4</code>, and <code>mla_decode</code>. Of them, 57 have
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>
+or batch size at most 64; the other two are <code>mm_fp4</code> cases at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>=</mo><mn>1024</mn></mrow><annotation encoding="application/x-tex">M=1024</annotation></semantics></math>.</p>
+<p>Regret expresses relative cost; absolute latency shows the size of
+that cost on the measured calls. For each workload, we averaged
+avoidable latency across the three selection seeds. Across the 59, the
+median was 91.9 µs and the maximum was 270.7 µs. Figure 5 groups every
+one of those workloads by operation; the four rows are the complete set
+of operation surfaces represented in the high-regret tail. Each dot is
+one workload mean, the gray bar is the interquartile range, the black
+diamond is the operation median, and the blue line is the overall
+median. Their concentration at small
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>M</mi><annotation encoding="application/x-tex">M</annotation></semantics></math>
+matches the decode-oriented, host-sensitive regime in which the timing
+boundary matters most.</p>
+<figure>
+<img role="img" aria-label="A distribution plot shows mean absolute latency penalty across three selection seeds for all 59 v1 eager workloads above 100 percent mean regret, grouped by operation." src="/assets/imgs/autotuner-v2/figure-5.svg" alt="A distribution plot shows mean absolute latency penalty across three selection seeds for all 59 v1 eager workloads above 100 percent mean regret, grouped by operation." loading="lazy">
+
+</figure>
+<p><em>Figure 5. Absolute latency cost across 59 high-regret eager
+workloads.</em></p>
+<p>These results measure tactic selection, not end-to-end serving.
+Translating them to request latency or throughput requires weighting
+each operation by how often it runs and how much of a request it
+occupies.</p>
+<h3 id="cuda-graph-execution-similar-quality-with-a-smaller-regret-tail">CUDA
+Graph execution: similar quality with a smaller regret tail</h3>
+<p>CUDA Graph replay provides a useful control regime. Here both
+policies already approximate the deployed work, so we expect a much
+smaller difference. Across 281 matched workloads, median regret fell
+from 0.0565% to 0.00646%, mean regret from 0.346% to 0.215%, the 90th
+percentile from 0.946% to 0.683%, and the count above 1% regret from 27
+to 10. Both policies had the same maximum workload-level mean regret of
+4.56%. Figure 6 summarizes the paired outcome for every workload.</p>
+<figure>
+<img role="img" aria-label="A horizontal outcome bar shows 55 matched workloads with lower regret under v1, 131 exact ties, and 95 with lower regret under v2." src="/assets/imgs/autotuner-v2/figure-6.svg" alt="A horizontal outcome bar shows 55 matched workloads with lower regret under v1, 131 exact ties, and 95 with lower regret under v2." loading="lazy">
+
+</figure>
+<p><em>Figure 6. Under CUDA Graph replay, v2 had lower measured regret
+in 95 cells; v1 had lower regret in 55; 131 were tied.</em></p>
+<p>The measured difference is modest, as expected when both policies
+already approximate graph replay. That contrast is the point: v2 reduces
+the smaller graph-regret tail without projecting the large eager
+mismatch onto graph-served paths.</p>
+<p>Eager accuracy still matters in mixed-mode serving, including
+selected prefill, MLA, and distributed MoE paths. An engine can also
+request CUDA Graph measurement explicitly even when the surrounding
+warmup runs eagerly, so the tuning objective need not be inferred from
+the warmup context.</p>
+<h3 id="persistence-cost-pay-at-startup-not-on-every-token">Persistence
+cost: pay at startup, not on every token</h3>
+<p>Persisting a correct winner is useful only if lookup does not add a
+recurring execution cost. Store attachment performs storage-dependent
+reads during warmup, so we separate that setup from first-touch and
+steady-state lookup latency.</p>
+<p>Across B200 and GB300, with either the full runner list or only the
+winner, the four v2/v1 median dispatch-latency ratios ranged from 0.997
+to 1.007, keeping v2 within 0.72% of v1. An audit recorded zero
+filesystem operations and zero JSON calls over 600 steady-state
+lookups.</p>
+<p>The lookup measurements show where the one-time in-process work
+ends:</p>
+<div class="blog-table-scroll" tabindex="0" role="region" aria-label="Benchmark or design table; scroll horizontally for all columns"><table>
+<colgroup>
+<col style="width: 42%">
+<col style="width: 57%">
+</colgroup>
+<thead>
+<tr>
+<th>Lifecycle stage</th>
+<th style="text-align: right;">Observed cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First lookup and hydration</td>
+<td style="text-align: right;">52.8–137.2 µs</td>
+</tr>
+<tr>
+<td>Steady-state lookup</td>
+<td style="text-align: right;">9.2–11.8 µs</td>
+</tr>
+<tr>
+<td>Steady-state I/O audit</td>
+<td style="text-align: right;">0 filesystem operations and 0 JSON calls
+over 600 lookups</td>
+</tr>
+</tbody>
+</table></div>
+<p>Figure 7 shows all four measured configurations and their min-to-max
+ranges. The first lookup builds the key, resolves the winner, and
+promotes it into memory; subsequent lookups use the in-process
+winner.</p>
+<figure>
+<img role="img" aria-label="Two horizontal range bars show first-touch latency of 52.8 to 137.2 microseconds and steady-state latency of 9.2 to 11.8 microseconds, with one point for each of four measured configurations." src="/assets/imgs/autotuner-v2/figure-7.svg" alt="Two horizontal range bars show first-touch latency of 52.8 to 137.2 microseconds and steady-state latency of 9.2 to 11.8 microseconds, with one point for each of four measured configurations." loading="lazy">
+
+</figure>
+<p><em>Figure 7. After first-touch hydration, lookup settles into the
+measured steady-state range.</em></p>
+<p>Fresh-cache tuning cost was also close: across 24 GPU-by-operation
+pairs on B200 and GB300, the median v2/v1 wall-time ratio was 1.007,
+with v2’s default path included among its candidates.</p>
+<h3 id="cache-correctness-under-failure">Cache correctness under
+failure</h3>
+<p>Latency parity shows that reuse is cheap, not that it behaves
+correctly. Four groups of tests exercised distinct failure
+boundaries:</p>
+<div class="blog-table-scroll" tabindex="0" role="region" aria-label="Benchmark or design table; scroll horizontally for all columns"><table>
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr>
+<th>Test boundary</th>
+<th>Observed result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cold-to-warm reuse</td>
+<td>A fresh process loaded the same keys and tactics; the warm restart
+triggered 0 new profiling starts.</td>
+</tr>
+<tr>
+<td>Isolation and fail-closed behavior</td>
+<td>Across 20 asserted controls, compatible stores hit as expected;
+cross-GPU, policy-mismatched, corrupted, and misplaced entries produced
+0 wrong hits.</td>
+</tr>
+<tr>
+<td>Key sensitivity</td>
+<td>Each of 11 one-field perturbations changed the key.</td>
+</tr>
+<tr>
+<td>Concurrent publication and reload</td>
+<td>Four writers left 12 parseable entries and no temporary files; a
+separate reload discarded 7 unpublished local winners as designed.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Figure 8 places these checks beside the selection matrix. Each matrix
+cell reports <code>eager / CUDA Graph</code> matched-workload counts for
+one operation surface on one GPU; for example, <code>8/8</code> means
+eight eager and eight CUDA Graph workloads, not a quality score. A dash
+means that pair was not tested. The right-hand panel reports whether the
+restart, concurrent-write, reload, key-sensitivity, and isolation checks
+passed.</p>
+<figure>
+<img role="img" aria-label="Heatmap of matched eager and CUDA Graph workloads across 14 operation surfaces and four GPU products, accompanied by the warm-restart, concurrent-publish, reload, key-ablation, and isolation checks." src="/assets/imgs/autotuner-v2/figure-8.svg" alt="Heatmap of matched eager and CUDA Graph workloads across 14 operation surfaces and four GPU products, accompanied by the warm-restart, concurrent-publish, reload, key-ablation, and isolation checks." loading="lazy">
+
+</figure>
+<p><em>Figure 8. Measured operation coverage and cache-correctness
+checks.</em></p>
+<p>Together, these tests cover the path from publication to reuse
+without claiming behavior outside the measured cases.</p>
+<h3 id="rank-agreement-across-distributed-execution">Rank agreement
+across distributed execution</h3>
+<p>Timing noise can make ranks select different tactics. For some
+distributed kernels, a tactic also determines how much NCCL-registered
+symmetric memory a rank allocates. Different rank-local choices can then
+create incompatible collective state and deadlock in tensor-parallel MoE
+serving.</p>
+<p>Ranks can be made to agree at two points, and FlashInfer supports
+both:</p>
+<p><strong>On the measurements.</strong> The existing process-group
+reduction averages each candidate’s measured time across ranks. Every
+rank therefore selects from the same reduced measurements and arrives at
+the same winner.</p>
+<p><strong>On the result.</strong> Autotuner v2’s
+<code>autotune_v2_reload()</code> lets ranks tune concurrently, cross a
+framework-owned barrier, clear their local winners, and reload the final
+valid entry from the shared store.</p>
+<p>The two paths need not choose the same tactic. Reduction selects the
+lowest mean measured time across participating ranks, at the cost of
+coordinating candidate measurements. Reload adopts the last valid
+published entry: it guarantees agreement, not a globally averaged
+optimum, and lets ranks tune independently until the barrier.</p>
+<p>Use reduction when ranks can coordinate throughout profiling and the
+tuning objective should combine their measured times. Use reload when
+ranks must tune concurrently but can share a store and synchronize
+before serving. The mechanisms can also be combined: reduction aligns
+the in-session choice, while reload finalizes the persisted state.</p>
+<p>We tested both paths on four GB200 ranks with deliberately noisy
+settings:</p>
+<div class="blog-table-scroll" tabindex="0" role="region" aria-label="Benchmark or design table; scroll horizontally for all columns"><table>
+<thead>
+<tr>
+<th>Coordination path</th>
+<th style="text-align: right;">Observed keys</th>
+<th style="text-align: right;">Keys with rank divergence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>None</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr>
+<td>Reduced measurements</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Barrier and reload</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table></div>
+<p>Figure 9 schematically contrasts the divergent control with the two
+protected paths; the counts come from the four-rank test.</p>
+<figure>
+<img role="img" aria-label="A schematic shows four GB200 ranks choosing different local tactics without coordination, while process-group reduction or barrier-and-reload converges every rank on the same tactic." src="/assets/imgs/autotuner-v2/figure-9.svg" alt="A schematic shows four GB200 ranks choosing different local tactics without coordination, while process-group reduction or barrier-and-reload converges every rank on the same tactic." loading="lazy">
+
+</figure>
+<p><em>Figure 9. Both protected paths converged on every tested GB200
+key.</em></p>
+<h3 id="what-the-measurements-changed">What the measurements
+changed</h3>
+<p>The evaluation did more than score v2. It exposed avoidable lookup
+work, an incomplete persistent key, and setup work inside a diagnostic
+timing window. Each finding led to an implementation change.</p>
+<p><strong>Persistence measurements simplified the hot path.</strong>
+Profiling traced avoidable lookup work to repeated construction of
+nested key strings and runner keys after the winner was already known.
+Moving string construction out of the hot path and promoting decoded
+entries into memory produced the steady-state parity shown in Figure
+7.</p>
+<p><strong>A key audit strengthened persistent identity.</strong> The
+SM100 MoE runner’s persisted key initially omitted constructor-fixed
+fields such as activation, weight layout, quantization, and expert
+structure, so two same-shape configurations could address the same
+entry. We added the relevant fields to that runner, completed the CuTe
+DSL MoE key with its missing expert and execution settings, and added
+input/output dtypes to the GEMM key. A separate GB200 ablation then
+perturbed 11 fields one at a time; all 11 changed the generated key,
+including <code>top_k</code> through runner <code>extras</code>.</p>
+<p><strong>Timer validation separated preparation from
+measurement.</strong> A cold-L2 probe fills a buffer so the next
+candidate does not inherit a warm cache. That preparation launches a
+100–120 µs fill kernel, so v2 now completes and synchronizes it before
+opening the diagnostic timing window.</p>
+<p>The timer audit also showed why CUPTI, NVIDIA’s profiling interface,
+is diagnostic here rather than the eager selection metric. For an eager
+<code>moe_cute_dsl</code> sequence of five Python-issued kernels, its
+GPU-side span was roughly 87% idle time between launches. CUPTI can show
+that the GPU is waiting between launches, but it does not capture the
+full wall-clock latency that an eager serving call pays. Across eight
+workloads and three seeds, CUPTI split 24 choices 13 to 11 between the
+128- and 256-tile families, while graph-captured rescoring favored the
+128 family on all eight workloads. We retain those eight workload cells
+in the aggregate but label them with this caveat. Figure 10 shows the
+mismatch.</p>
+<figure>
+<img role="img" aria-label="A schematic CUPTI span contains five short kernel launches and approximately 87 percent GPU idle time. Tile-family selection is nearly even under CUPTI, while graph-captured rescoring favors the 128 family in all eight workloads." src="/assets/imgs/autotuner-v2/figure-10.svg" alt="A schematic CUPTI span contains five short kernel launches and approximately 87 percent GPU idle time. Tile-family selection is nearly even under CUPTI, while graph-captured rescoring favors the 128 family in all eight workloads." loading="lazy">
+
+</figure>
+<p><em>Figure 10. CUPTI captured mostly idle time for this eager MoE
+sequence.</em></p>
+<p>The benchmark campaign therefore changed three implementation layers:
+the lookup hot path, persistent identity, and diagnostic timing.</p>
+<h2 id="conclusion-tune-the-way-you-serve">Conclusion: tune the way you
+serve</h2>
+<p>Scaling kernel autotuning from a warmup measurement into a production
+serving system creates three coupled problems: measurement, artifact
+validity, and, in distributed execution, rank agreement.</p>
+<p>Autotuner v2 connects those pieces around one rule: tune the path
+production will run. The measurement policy defines the timing boundary.
+Environment and operation identities define where a result can be
+reused. Autotuner v2 includes the default path among the candidates,
+publishes entries atomically, validates them where runners provide
+hooks, promotes decoded winners into memory, and provides explicit
+convergence paths.</p>
+<p>The evaluation covers the same four questions. The eager results show
+the cost of measuring the wrong path. The smaller CUDA Graph result
+shows only a modest difference when both policies already measure
+similar work. The cache results show that stronger reuse checks need not
+become a per-token tax. The same evidence simplified the hot path,
+strengthened cache identity, and refined diagnostic timing.</p>
+<p>The broader lesson is that the best tactic for serving is not
+determined by kernel time alone. It emerges from the kernel, launch
+path, capture mode, cache state, and the runtime around them. As
+inference stacks become more heterogeneous, autotuning must measure that
+context and preserve enough of its identity to know when a result
+remains valid.</p>
+<p>Autotuner v2 is part of FlashInfer. The implementation and design
+history are available in <a href="https://github.com/flashinfer-ai/flashinfer/pull/3861">PR
+#3861</a> and <a href="https://github.com/flashinfer-ai/flashinfer/issues/3920">RFC
+#3920</a>.</p>
+<p>In future posts, we will share more of what we learn from measuring
+and deploying the low-level operators behind LLM inference. Stay tuned,
+and join the discussion in the FlashInfer project.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>FlashInfer Autotuner v2 grew out of a substantial engineering effort
+within NVIDIA’s FlashInfer team, guided by systematic measurement and
+validation. As part of the broader FlashInfer community, we are building
+an open community around autotuning to advance GPU kernel selection for
+production LLM inference. We welcome contributions from ML systems
+researchers and practitioners.</p>
+<p>We thank <strong>Yang Xu</strong> (NVIDIA; Senior Manager, FlashInfer
+and cuDNN) for driving the design, core implementation, and technical
+iteration of this effort; <strong>Albert Cheng</strong> (NVIDIA;
+Engineer, LLM Training and Inference) for system design, benchmark
+methodology, validation design, incorporating vLLM requirements,
+iterative development, and leading the drafting and writing of this
+article; <strong>Vincent Tombari</strong> (NVIDIA; Engineer, FlashInfer
+and cuDNN) for shaping the benchmarking methodology, collecting and
+validating measurements, developing and iterating on the evaluation, and
+providing extensive feedback on the article draft; <strong>Alex
+Yang</strong> and <strong>Brian K. Ryu</strong> (NVIDIA; Technical
+Leads, FlashInfer) for technical direction, design review, and extensive
+feedback on the article draft; <strong>Jingfan Sun</strong> (NVIDIA;
+Senior Manager, FlashInfer and cuDNN) for engineering leadership and
+project guidance; <strong>Lee Nau</strong> (NVIDIA; Engineer, SGLang)
+for iterative design feedback, SGLang requirements, and integration
+guidance; <strong>Xin Li</strong> (NVIDIA; vLLM Engineering Lead) for
+vLLM framework leadership and integration guidance; and <strong>Po-Han
+Huang</strong> (NVIDIA; SGLang Engineering Lead) for SGLang framework
+leadership and integration guidance. We are also grateful to the broader
+<strong>FlashInfer</strong>, <strong>vLLM</strong>,
+<strong>SGLang</strong>, and <strong>TensorRT-LLM</strong> communities
+for helping shape this work.</p>
+<h2 id="citation">Citation</h2>
+<p>Please cite this work as:</p>
+<blockquote>
+<p>Yang Xu, Albert Cheng, Vincent Tombari, Alex Yang, Brian K. Ryu,
+Jingfan Sun, Lee Nau, Xin Li, Po-Han Huang, and NVIDIA, “FlashInfer
+Autotuner v2: Tune the Way You Serve,” <em>FlashInfer Blog</em>,
+September 2026.</p>
+</blockquote>
+<p>Or use the BibTeX citation:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bibtex"><code class="sourceCode bibtex">@article{xu2026flashinferautotuner,
+  author = {Yang Xu and Albert Cheng and Vincent Tombari and Alex Yang and Brian K. Ryu and Jingfan Sun and Lee Nau and Xin Li and Po-Han Huang and {{NVIDIA}}},
+  title = {{FlashInfer} Autotuner v2: Tune the Way You Serve},
+  journal = {FlashInfer Blog},
+  year = {2026},
+  month = sep,
+  note = {https://flashinfer.ai/2026/09/22/autotuner-v2.html}
+}</code></pre></div>
+
+
+{% endraw %}
